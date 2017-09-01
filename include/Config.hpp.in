@@ -1,0 +1,14 @@
+//
+//
+//
+
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
+
+// clang-format off
+#define @PRJ_NAME_UPPER@_DEBUG @PRJ_DEBUG_VALUE@
+
+#define @PRJ_NAME_UPPER@_VERSION @PRJ_VERSION@
+// clang-format on
+
+#endif // CONFIG_HPP
