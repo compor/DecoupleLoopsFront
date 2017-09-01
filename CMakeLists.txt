@@ -51,8 +51,6 @@ handle_llvm_dependency(${PRJ_STANDALONE_BUILD})
 
 # project configuration
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-
 if(NOT LLVM_ENABLE_RTTI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 endif()
@@ -94,6 +92,16 @@ endif()
 
 # dependencies
 
+find_package(DecoupleLoops REQUIRED)
+
+if(DECOUPLELOOPS_FOUND)
+  set(${PRJ_NAME_UPPER}_USES_DECOUPLELOOPS 1)
+else()
+  set(${PRJ_NAME_UPPER}_USES_DECOUPLELOOPS 0)
+  message(WARNING "package DecoupleLoops was not found; skipping.")
+endif()
+
+
 #find_package(AnnotateLoops CONFIG)
 
 #if(AnnotateLoops_FOUND)
@@ -134,6 +142,15 @@ endif()
 #if(AnnotateLoops_FOUND)
   #target_link_libraries(${LIB_NAME} PUBLIC LLVMAnnotateLoopsPass)
 #endif()
+
+set_target_properties(${LIB_NAME} PROPERTIES 
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON)
+
+
+if(DECOUPLELOOPS_FOUND)
+  target_link_libraries(${LIB_NAME} PRIVATE DecoupleLoops)
+endif()
 
 target_compile_definitions(${LIB_NAME} PUBLIC ${LLVM_DEFINITIONS})
 target_compile_definitions(${LIB_NAME} PRIVATE VERSION_STRING=${PRJ_VERSION})

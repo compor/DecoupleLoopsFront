@@ -8,6 +8,10 @@
 
 #include "DecoupleLoopsFrontPass.hpp"
 
+#if DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
+#include "DecoupleLoops.h"
+#endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
