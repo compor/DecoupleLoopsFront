@@ -27,6 +27,10 @@
 #include "llvm/IR/Module.h"
 // using llvm::Module
 
+#include "llvm/IR/Dominators.h"
+// using llvm::DominatorTreeWrapperPass
+// using llvm::DominatorTree
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::LoopInfoWrapperPass
 // using llvm::LoopInfo
@@ -155,9 +159,29 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   bool hasModuleChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
   llvm::SmallVector<llvm::Loop *, 16> workList;
-  llvm::LoopInfo *LI = nullptr;
 
-  //
+  for (auto &CurFunc : CurMod) {
+    if (CurFunc.isDeclaration())
+      continue;
+
+    auto &DT =
+        getAnalysis<llvm::DominatorTreeWrapperPass>(CurFunc).getDomTree();
+    auto &DLP = getAnalysis<DecoupleLoopsPass>(CurFunc);
+    auto &LI = *DLP.getLI(&CurFunc);
+
+    workList.clear();
+
+    auto loopsFilter = [&](auto *e) { workList.push_back(e); };
+
+    std::for_each(LI.begin(), LI.end(), loopsFilter);
+
+    std::reverse(workList.begin(), workList.end());
+
+    for (auto *e : workList) {
+      llvm::SmallVector<llvm::BasicBlock *, 16> bbWorkList;
+      bbWorkList.append(e->block_begin(), e->block_end());
+    }
+  }
 
   if (shouldReport) {
   }
@@ -168,6 +192,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 void DecoupleLoopsFrontPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
   AU.addPreserved<llvm::LoopInfoWrapperPass>();
+  AU.addRequired<llvm::DominatorTreeWrapperPass>();
+  AU.addRequired<DecoupleLoopsPass>();
 
   return;
 }
