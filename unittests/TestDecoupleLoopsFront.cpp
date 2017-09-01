@@ -49,7 +49,7 @@
 #include "boost/variant.hpp"
 // using boost::variant
 
-#include "LoopRuntimeProfilerPass.hpp"
+#include "DecoupleLoopsFrontPass.hpp"
 
 namespace icsa {
 namespace {

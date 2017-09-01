@@ -48,6 +48,9 @@
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 
+#include "llvm/Support/FileSystem.h"
+// using llvm::sys::fs
+
 #include "llvm/Support/Debug.h"
 // using DEBUG macro
 // using llvm::dbgs
