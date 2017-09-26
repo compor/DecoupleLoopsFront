@@ -42,6 +42,9 @@
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
 
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+// using llvm::SplitBlock
+
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
@@ -63,11 +66,18 @@
 // using DEBUG macro
 // using llvm::dbgs
 
+#include <vector>
+// using std::vector
+
+#include <map>
+// using std::map
+
 #include <set>
 // using std::set
 
 #include <algorithm>
 // using std::for_each
+// using std::reverse
 
 #include <string>
 // using std::string
@@ -156,6 +166,10 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   checkCmdLineOptions();
 
+  std::map<llvm::BasicBlock *, DLMode> bbModes;
+  using ModeChangePointTy = std::pair<llvm::Instruction *, DLMode>;
+  std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
+
   bool hasModuleChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
   llvm::SmallVector<llvm::Loop *, 16> workList;
@@ -166,20 +180,84 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     auto &DT =
         getAnalysis<llvm::DominatorTreeWrapperPass>(CurFunc).getDomTree();
+    auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>(CurFunc).getLoopInfo();
     auto &DLP = getAnalysis<DecoupleLoopsPass>(CurFunc);
-    auto &LI = *DLP.getLI(&CurFunc);
+    auto &DLPLI = *DLP.getLI(&CurFunc);
 
     workList.clear();
 
     auto loopsFilter = [&](auto *e) { workList.push_back(e); };
 
-    std::for_each(LI.begin(), LI.end(), loopsFilter);
+    std::for_each(DLPLI.begin(), DLPLI.end(), loopsFilter);
 
     std::reverse(workList.begin(), workList.end());
 
     for (auto *e : workList) {
+      if (!DLP.hasWork(e))
+        continue;
+
       llvm::SmallVector<llvm::BasicBlock *, 16> bbWorkList;
       bbWorkList.append(e->block_begin(), e->block_end());
+
+      for (auto *bb : bbWorkList) {
+        auto *firstI = bb->getFirstNonPHIOrDbgOrLifetime();
+
+        DLMode blockStartMode;
+        DLP.isWork(*firstI, e) ? blockStartMode = DLMode::Payload
+                               : blockStartMode = DLMode::Iterator;
+
+        bool hasAllSameModeInstructions = true;
+
+        for (auto &inst : *bb) {
+          DLMode instMode;
+          DLP.isWork(inst, e) ? instMode = DLMode::Payload
+                              : instMode = DLMode::Iterator;
+
+          if (blockStartMode == instMode)
+            continue;
+
+          hasAllSameModeInstructions = false;
+          auto modeChangePt = std::make_pair(&inst, instMode);
+          if (modeChanges.find(bb) == modeChanges.end())
+            modeChanges.emplace(bb, std::vector<ModeChangePointTy>{});
+
+          modeChanges.at(bb).push_back(modeChangePt);
+        }
+
+        if (hasAllSameModeInstructions)
+          bbModes.emplace(bb, blockStartMode);
+      }
+    }
+
+    // xform part
+
+    for (auto &e : modeChanges) {
+      auto *oldBB = e.first;
+      std::reverse(e.second.begin(), e.second.end());
+      for (auto &e : e.second) {
+        auto *splitI = e.first;
+        auto mode = e.second;
+        auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
+        hasModuleChanged |= true;
+        bbModes.emplace(newBB, mode);
+
+        DLMode otherMode;
+        mode == DLMode::Payload ? otherMode = DLMode::Iterator
+                                : otherMode = DLMode::Payload;
+        bbModes.emplace(oldBB, mode);
+      }
+    }
+
+    for (auto &e : bbModes) {
+      llvm::StringRef name = "";
+      if (e.first->hasName()) {
+        name = e.first->getName();
+      }
+
+      llvm::StringRef prefix;
+      e.second == DLMode::Payload ? prefix = "pd_" : prefix = "it_";
+
+      e.first->setName(prefix + name);
     }
   }
 
