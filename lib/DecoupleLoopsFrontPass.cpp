@@ -240,19 +240,22 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     for (auto &e : modeChanges) {
       auto *oldBB = e.first;
+      DLMode mode;
       std::reverse(e.second.begin(), e.second.end());
       for (auto &k : e.second) {
         auto *splitI = k.first;
-        auto mode = k.second;
+        mode = k.second;
         auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
         hasModuleChanged |= true;
         bbModes.emplace(newBB, mode);
 
-        DLMode otherMode;
-        mode == DLMode::Payload ? otherMode = DLMode::Iterator
-                                : otherMode = DLMode::Payload;
-        bbModes.emplace(oldBB, otherMode);
+        // llvm::errs() << *splitI;
       }
+
+      DLMode otherMode;
+      mode == DLMode::Payload ? otherMode = DLMode::Iterator
+                              : otherMode = DLMode::Payload;
+      bbModes.emplace(oldBB, otherMode);
     }
 
     for (auto &e : bbModes) {
