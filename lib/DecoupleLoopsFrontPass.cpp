@@ -200,20 +200,25 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       bbWorkList.append(e->block_begin(), e->block_end());
 
       for (auto *bb : bbWorkList) {
-        auto *firstI = bb->getFirstNonPHIOrDbgOrLifetime();
+        auto *firstI = bb->getFirstNonPHI();
 
-        DLMode blockStartMode;
-        DLP.isWork(*firstI, e) ? blockStartMode = DLMode::Payload
-                               : blockStartMode = DLMode::Iterator;
+        DLMode lastMode;
+        DLP.isWork(*firstI, e) ? lastMode = DLMode::Payload
+                               : lastMode = DLMode::Iterator;
 
         bool hasAllSameModeInstructions = true;
 
-        for (auto &inst : *bb) {
+        for (llvm::BasicBlock::iterator ii = bb->getFirstNonPHI(),
+                                        ie = bb->end();
+             ii != ie; ++ii) {
+          auto &inst = *ii;
           DLMode instMode;
           DLP.isWork(inst, e) ? instMode = DLMode::Payload
                               : instMode = DLMode::Iterator;
 
-          if (blockStartMode == instMode)
+          llvm::outs() << inst << " -- " << static_cast<int>(instMode) << "\n";
+
+          if (lastMode == instMode)
             continue;
 
           hasAllSameModeInstructions = false;
@@ -222,10 +227,12 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
             modeChanges.emplace(bb, std::vector<ModeChangePointTy>{});
 
           modeChanges.at(bb).push_back(modeChangePt);
+
+          lastMode = instMode;
         }
 
         if (hasAllSameModeInstructions)
-          bbModes.emplace(bb, blockStartMode);
+          bbModes.emplace(bb, lastMode);
       }
     }
 
