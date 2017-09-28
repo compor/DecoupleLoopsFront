@@ -21,7 +21,7 @@ BEGIN {
     print $0
   else {
     for(i=1; i <= NF; ++i)
-      hold=hold""$i
+      hold=hold" "$i
 
     lastfield_len=length($NF)
     if(substr($NF, lastfield_len, 1) == ";")
