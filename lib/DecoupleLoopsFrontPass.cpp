@@ -190,6 +190,15 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 
 //
 
+inline DLMode getMode(const llvm::Instruction &Inst, const llvm::Loop &CurLoop,
+                      const DecoupleLoopsPass &DLP) {
+  return DLP.isWork(Inst, &CurLoop) ? DLMode::Payload : DLMode::Iterator;
+}
+
+inline DLMode invertMode(DLMode mode) {
+  return mode == DLMode::Payload ? DLMode::Iterator : DLMode::Payload;
+}
+
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   using ModeChangePointTy = std::pair<llvm::Instruction *, DLMode>;
   std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
@@ -205,22 +214,20 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
   for (auto &CurFunc : CurMod) {
     hasFunctionChanged = false;
+    workList.clear();
+    modeChanges.clear();
+    bbModes.clear();
 
     if (CurFunc.isDeclaration())
       continue;
 
     DEBUG_CMD(llvm::errs() << "process func: " << CurFunc.getName() << "\n");
 
-    modeChanges.clear();
-    bbModes.clear();
-
     auto &DT =
         getAnalysis<llvm::DominatorTreeWrapperPass>(CurFunc).getDomTree();
     auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>(CurFunc).getLoopInfo();
     auto &DLP = getAnalysis<DecoupleLoopsPass>(CurFunc);
     auto &DLPLI = *DLP.getLI(&CurFunc);
-
-    workList.clear();
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
     AnnotateLoops al;
@@ -256,19 +263,14 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       for (auto *bb : bbWorkList) {
         auto *firstI = bb->getFirstNonPHI();
 
-        DLMode lastMode;
-        DLP.isWork(*firstI, e) ? lastMode = DLMode::Payload
-                               : lastMode = DLMode::Iterator;
-
+        DLMode lastMode = getMode(*firstI, *e, DLP);
         bool hasAllSameModeInstructions = true;
 
         for (llvm::BasicBlock::iterator ii = bb->getFirstNonPHI(),
                                         ie = bb->end();
              ii != ie; ++ii) {
           auto &inst = *ii;
-          DLMode instMode;
-          DLP.isWork(inst, e) ? instMode = DLMode::Payload
-                              : instMode = DLMode::Iterator;
+          DLMode instMode = getMode(inst, *e, DLP);
 
           if (lastMode == instMode)
             continue;
@@ -279,7 +281,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
             modeChanges.emplace(bb, std::vector<ModeChangePointTy>{});
 
           modeChanges.at(bb).push_back(modeChangePt);
-
           lastMode = instMode;
         }
 
@@ -312,10 +313,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
           FunctionsAltered.insert(CurFunc.getName());
       }
 
-      DLMode otherMode;
-      mode == DLMode::Payload ? otherMode = DLMode::Iterator
-                              : otherMode = DLMode::Payload;
-      bbModes.emplace(oldBB, otherMode);
+      bbModes.emplace(oldBB, invertMode(mode));
     }
 
     for (auto &e : bbModes) {
