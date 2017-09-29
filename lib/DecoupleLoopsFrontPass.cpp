@@ -156,7 +156,9 @@ static llvm::cl::opt<bool, true>
 
 namespace {
 
-void checkCmdLineOptions(void) { return; }
+using FunctionName_t = std::string;
+
+std::set<FunctionName_t> FunctionsAltered;
 
 void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
   std::error_code err;
@@ -168,6 +170,8 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
     llvm::errs() << "could not open file: \"" << filename
                  << "\" reason: " << err.message() << "\n";
   else {
+    for (const auto &e : FunctionsAltered)
+      report << e << "\n";
   }
 
   report.close();
@@ -180,8 +184,6 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 //
 
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
-  checkCmdLineOptions();
-
   std::map<llvm::BasicBlock *, DLMode> bbModes;
   using ModeChangePointTy = std::pair<llvm::Instruction *, DLMode>;
   std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
@@ -272,6 +274,9 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         hasModuleChanged |= true;
         hasFunctionChanged = true;
         bbModes.emplace(newBB, mode);
+
+        if (shouldReport)
+          FunctionsAltered.insert(CurFunc.getName());
       }
 
       DLMode otherMode;
@@ -309,8 +314,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
   }
 
-  if (shouldReport) {
-  }
+  if (shouldReport)
+    report(ReportFilenamePrefix, "FunctionsAltered");
 
   return hasModuleChanged;
 }
