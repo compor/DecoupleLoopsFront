@@ -228,8 +228,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     auto loopsFilter = [&](auto *e) {
       if (al.hasAnnotatedId(*e)) {
         auto id = al.getAnnotatedId(*e);
-        if (loopIDs.count(id))
-          workList.push_back(e);
+        workList.push_back(e);
       }
     };
 #else
