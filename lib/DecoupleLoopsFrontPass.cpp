@@ -48,6 +48,9 @@
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
+#include "llvm/Support/GraphWriter.h"
+// using llvm:WriteGraph
+
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
 // using llvm::cl::list
@@ -85,6 +88,9 @@
 
 #include <fstream>
 // using std::ifstream
+
+#include <system_error>
+// using std::error_code
 
 #include <cassert>
 // using assert
@@ -126,6 +132,11 @@ static llvm::RegisterStandardPasses
                                    registerDecoupleLoopsFrontPass);
 
 //
+
+static llvm::cl::opt<bool>
+    DotCFGOnly("dlf-dot-cfg-only",
+               llvm::cl::desc("Print CFG of altered functions to 'dot' file "
+                              "(with no function bodies)"));
 
 static llvm::cl::opt<std::string>
     ReportFilenamePrefix("dlf-report",
@@ -270,6 +281,21 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       e.second == DLMode::Payload ? prefix = "pd_" : prefix = "it_";
 
       e.first->setName(prefix + name);
+    }
+
+    if (DotCFGOnly) {
+      auto dotFilename = ("cfg." + CurFunc.getName() + ".dot").str();
+
+      DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
+      std::error_code ec;
+      llvm::raw_fd_ostream dotFile(dotFilename, ec, llvm::sys::fs::F_Text);
+
+      if (!ec)
+        llvm::WriteGraph(dotFile, (const llvm::Function *)&CurFunc,
+                         llvm::sys::fs::F_Text);
+      else
+        DEBUG_CMD(llvm::errs() << "error writing file: " << dotFilename
+                               << "\n");
     }
   }
 
