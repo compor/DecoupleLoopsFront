@@ -182,10 +182,13 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
 
   bool hasModuleChanged = false;
+  bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
   llvm::SmallVector<llvm::Loop *, 16> workList;
 
   for (auto &CurFunc : CurMod) {
+    hasFunctionChanged = false;
+
     if (CurFunc.isDeclaration())
       continue;
 
@@ -262,6 +265,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         mode = k.second;
         auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
         hasModuleChanged |= true;
+        hasFunctionChanged = true;
         bbModes.emplace(newBB, mode);
       }
 
@@ -283,7 +287,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       e.first->setName(prefix + name);
     }
 
-    if (DotCFGOnly) {
+    if (DotCFGOnly && hasFunctionChanged) {
       auto dotFilename = ("cfg." + CurFunc.getName() + ".dot").str();
 
       DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
