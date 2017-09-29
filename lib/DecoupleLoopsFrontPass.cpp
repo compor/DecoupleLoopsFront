@@ -189,7 +189,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     if (CurFunc.isDeclaration())
       continue;
 
-    DEBUG_MSG(llvm::errs() << "process func: " << CurFunc.getName() << "\n");
+    DEBUG_CMD(llvm::errs() << "process func: " << CurFunc.getName() << "\n");
 
     modeChanges.clear();
     bbModes.clear();
