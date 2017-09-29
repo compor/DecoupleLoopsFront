@@ -363,9 +363,9 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 void DecoupleLoopsFrontPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addPreservedID(llvm::LoopSimplifyID);
   AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
-  // AU.addPreserved<llvm::LoopInfoWrapperPass>();
+  AU.addPreserved<llvm::LoopInfoWrapperPass>();
   AU.addRequired<llvm::DominatorTreeWrapperPass>();
-  // AU.addPreserved<llvm::DominatorTreeWrapperPass>();
+  AU.addPreserved<llvm::DominatorTreeWrapperPass>();
   AU.addRequired<DecoupleLoopsPass>();
 
   return;
