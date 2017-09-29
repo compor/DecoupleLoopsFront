@@ -291,7 +291,10 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     // xform part
-    DEBUG_CMD(llvm::errs() << "transform func: " << CurFunc.getName() << "\n");
+    // clang-format off
+    DEBUG_CMD(if (modeChanges.size())
+              llvm::errs() << "transform func: " << CurFunc.getName() << "\n");
+    // clang-format on
 
     for (auto &e : modeChanges) {
       auto *oldBB = e.first;
