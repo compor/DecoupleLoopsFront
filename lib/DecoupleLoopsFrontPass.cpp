@@ -135,8 +135,13 @@ static llvm::RegisterStandardPasses
 
 static llvm::cl::opt<bool>
     DotCFGOnly("dlf-dot-cfg-only",
-               llvm::cl::desc("Print CFG of altered functions to 'dot' file "
+               llvm::cl::desc("print CFG of altered functions to 'dot' file "
                               "(with no function bodies)"));
+
+static llvm::cl::opt<std::string>
+    DotCFGDirectory("dlf-dot-dir",
+                    llvm::cl::desc("location to output 'dot' files"),
+                    llvm::cl::init("."));
 
 static llvm::cl::opt<std::string>
     ReportFilenamePrefix("dlf-report",
@@ -288,7 +293,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     if (DotCFGOnly && hasFunctionChanged) {
-      auto dotFilename = ("cfg." + CurFunc.getName() + ".dot").str();
+      auto dotFilename =
+          (DotCFGDirectory + "/" + "cfg." + CurFunc.getName() + ".dot").str();
 
       DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
       std::error_code ec;
