@@ -178,6 +178,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     if (CurFunc.isDeclaration())
       continue;
 
+    DEBUG_MSG(llvm::errs() << "process func: " << CurFunc.getName() << "\n");
+
+    modeChanges.clear();
+    bbModes.clear();
+
     auto &DT =
         getAnalysis<llvm::DominatorTreeWrapperPass>(CurFunc).getDomTree();
     auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>(CurFunc).getLoopInfo();
@@ -216,8 +221,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
           DLP.isWork(inst, e) ? instMode = DLMode::Payload
                               : instMode = DLMode::Iterator;
 
-          llvm::outs() << inst << " -- " << static_cast<int>(instMode) << "\n";
-
           if (lastMode == instMode)
             continue;
 
@@ -237,6 +240,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     // xform part
+    DEBUG_CMD(llvm::errs() << "transform func: " << CurFunc.getName() << "\n");
 
     for (auto &e : modeChanges) {
       auto *oldBB = e.first;
@@ -248,8 +252,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
         hasModuleChanged |= true;
         bbModes.emplace(newBB, mode);
-
-        // llvm::errs() << *splitI;
       }
 
       DLMode otherMode;
