@@ -102,14 +102,14 @@ else()
 endif()
 
 
-#find_package(AnnotateLoops CONFIG)
+find_package(AnnotateLoops CONFIG)
 
-#if(AnnotateLoops_FOUND)
-  #set(${PRJ_NAME_UPPER}_USES_ANNOTATELOOPS 1)
-#else()
-  #set(${PRJ_NAME_UPPER}_USES_ANNOTATELOOPS 0)
-  #message(WARNING "package AnnotateLoops was not found")
-#endif()
+if(AnnotateLoops_FOUND)
+  set(${PRJ_NAME_UPPER}_USES_ANNOTATELOOPS 1)
+else()
+  set(${PRJ_NAME_UPPER}_USES_ANNOTATELOOPS 0)
+  message(WARNING "package AnnotateLoops was not found")
+endif()
 
 
 #
@@ -139,9 +139,9 @@ endif()
 #llvm_map_components_to_libnames(llvm_libs core support analysis ipo passes)
 #target_link_libraries(${LIB_NAME} PUBLIC ${llvm_libs})
 
-#if(AnnotateLoops_FOUND)
-  #target_link_libraries(${LIB_NAME} PUBLIC LLVMAnnotateLoopsPass)
-#endif()
+if(AnnotateLoops_FOUND)
+  target_link_libraries(${LIB_NAME} PUBLIC LLVMAnnotateLoopsPass)
+endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES 
   CXX_STANDARD 14

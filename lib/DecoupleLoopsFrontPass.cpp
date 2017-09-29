@@ -12,6 +12,10 @@
 #include "DecoupleLoops.h"
 #endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
 
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+#include "AnnotateLoops.hpp"
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
@@ -44,6 +48,9 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 // using llvm::SplitBlock
+
+#include "llvm/Transforms/Scalar.h"
+// using char llvm::LoopInfoSimplifyID
 
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
@@ -139,9 +146,9 @@ static llvm::cl::opt<bool>
                               "(with no function bodies)"));
 
 static llvm::cl::opt<std::string>
-    DotCFGDirectory("dlf-dot-dir",
-                    llvm::cl::desc("location to output 'dot' files"),
-                    llvm::cl::init("."));
+    DotDirectory("dlf-dot-dir",
+                 llvm::cl::desc("location to output 'dot' files"),
+                 llvm::cl::init("."));
 
 static llvm::cl::opt<std::string>
     ReportFilenamePrefix("dlf-report",
@@ -184,14 +191,17 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 //
 
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
-  std::map<llvm::BasicBlock *, DLMode> bbModes;
   using ModeChangePointTy = std::pair<llvm::Instruction *, DLMode>;
   std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
-
+  std::map<llvm::BasicBlock *, DLMode> bbModes;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
   llvm::SmallVector<llvm::Loop *, 16> workList;
+
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+  std::set<unsigned int> loopIDs;
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
   for (auto &CurFunc : CurMod) {
     hasFunctionChanged = false;
@@ -212,15 +222,34 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     workList.clear();
 
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+    AnnotateLoops al;
+
+    auto loopsFilter = [&](auto *e) {
+      if (al.hasAnnotatedId(*e)) {
+        auto id = al.getAnnotatedId(*e);
+        if (loopIDs.count(id))
+          workList.push_back(e);
+      }
+    };
+#else
     auto loopsFilter = [&](auto *e) { workList.push_back(e); };
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
     std::for_each(DLPLI.begin(), DLPLI.end(), loopsFilter);
-
     std::reverse(workList.begin(), workList.end());
+
+    unsigned numLoopsToAlterPerFunction = 0;
+    unsigned lastIdNum = 0;
 
     for (auto *e : workList) {
       if (!DLP.hasWork(e))
         continue;
+
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+      if (al.hasAnnotatedId(*e))
+        lastIdNum = al.getAnnotatedId(*e);
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
       llvm::SmallVector<llvm::BasicBlock *, 16> bbWorkList;
       bbWorkList.append(e->block_begin(), e->block_end());
@@ -257,6 +286,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
         if (hasAllSameModeInstructions)
           bbModes.emplace(bb, lastMode);
+        else
+          numLoopsToAlterPerFunction++;
       }
     }
 
@@ -298,8 +329,15 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     if (DotCFGOnly && hasFunctionChanged) {
+      std::string extraId{""};
+
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+      if (numLoopsToAlterPerFunction == 1)
+        extraId = "." + std::to_string(lastIdNum);
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+
       auto dotFilename =
-          (DotCFGDirectory + "/" + "cfg." + CurFunc.getName() + ".dot").str();
+          (DotDirectory + "/cfg." + CurFunc.getName() + extraId + ".dot").str();
 
       DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
       std::error_code ec;
@@ -321,9 +359,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 }
 
 void DecoupleLoopsFrontPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreservedID(llvm::LoopSimplifyID);
   AU.addRequiredTransitive<llvm::LoopInfoWrapperPass>();
-  AU.addPreserved<llvm::LoopInfoWrapperPass>();
+  // AU.addPreserved<llvm::LoopInfoWrapperPass>();
   AU.addRequired<llvm::DominatorTreeWrapperPass>();
+  // AU.addPreserved<llvm::DominatorTreeWrapperPass>();
   AU.addRequired<DecoupleLoopsPass>();
 
   return;
