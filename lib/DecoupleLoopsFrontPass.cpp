@@ -6,11 +6,9 @@
 
 #include "Utils.hpp"
 
-#include "DecoupleLoopsFrontPass.hpp"
+#include "DecoupleLoopsFront.hpp"
 
-#if DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
-#include "DecoupleLoops.h"
-#endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
+#include "DecoupleLoopsFrontPass.hpp"
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 #include "AnnotateLoops.hpp"
@@ -190,19 +188,11 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 
 //
 
-inline DLMode getMode(const llvm::Instruction &Inst, const llvm::Loop &CurLoop,
-                      const DecoupleLoopsPass &DLP) {
-  return DLP.isWork(Inst, &CurLoop) ? DLMode::Payload : DLMode::Iterator;
-}
-
-inline DLMode invertMode(DLMode mode) {
-  return mode == DLMode::Payload ? DLMode::Iterator : DLMode::Payload;
-}
-
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
-  using ModeChangePointTy = std::pair<llvm::Instruction *, DLMode>;
+  using ModeChangePointTy =
+      std::pair<llvm::Instruction *, IteratorRecognitionMode>;
   std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
-  std::map<llvm::BasicBlock *, DLMode> bbModes;
+  std::map<llvm::BasicBlock *, IteratorRecognitionMode> bbModes;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
@@ -263,14 +253,14 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       for (auto *bb : bbWorkList) {
         auto *firstI = bb->getFirstNonPHI();
 
-        DLMode lastMode = getMode(*firstI, *e, DLP);
+        IteratorRecognitionMode lastMode = GetMode(*firstI, *e, DLP);
         bool hasAllSameModeInstructions = true;
 
         for (llvm::BasicBlock::iterator ii = bb->getFirstNonPHI(),
                                         ie = bb->end();
              ii != ie; ++ii) {
           auto &inst = *ii;
-          DLMode instMode = getMode(inst, *e, DLP);
+          IteratorRecognitionMode instMode = GetMode(inst, *e, DLP);
 
           if (lastMode == instMode)
             continue;
@@ -299,7 +289,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     for (auto &e : modeChanges) {
       auto *oldBB = e.first;
-      DLMode mode;
+      IteratorRecognitionMode mode;
       std::reverse(e.second.begin(), e.second.end());
       for (auto &k : e.second) {
         auto *splitI = k.first;
@@ -313,7 +303,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
           FunctionsAltered.insert(CurFunc.getName());
       }
 
-      bbModes.emplace(oldBB, invertMode(mode));
+      bbModes.emplace(oldBB, InvertMode(mode));
     }
 
     for (auto &e : bbModes) {
@@ -323,7 +313,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       }
 
       llvm::StringRef prefix;
-      e.second == DLMode::Payload ? prefix = "pd_" : prefix = "it_";
+      e.second == IteratorRecognitionMode::PayloadMode ? prefix = "pd_"
+                                                       : prefix = "it_";
 
       e.first->setName(prefix + name);
     }

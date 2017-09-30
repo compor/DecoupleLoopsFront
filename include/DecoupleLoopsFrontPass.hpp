@@ -16,8 +16,6 @@ class Module;
 
 namespace icsa {
 
-enum class DLMode : unsigned { Iterator, Payload };
-
 class DecoupleLoopsFrontPass : public llvm::ModulePass {
 public:
   static char ID;
