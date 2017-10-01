@@ -189,10 +189,8 @@ void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
 //
 
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
-  using ModeChangePointTy =
-      std::pair<llvm::Instruction *, IteratorRecognitionMode>;
-  std::map<llvm::BasicBlock *, std::vector<ModeChangePointTy>> modeChanges;
-  std::map<llvm::BasicBlock *, IteratorRecognitionMode> bbModes;
+  IteratorRecognition::BlockModeChangePointMapTy modeChanges;
+  IteratorRecognition::BlockModeMapTy blockModes;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
@@ -206,7 +204,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     hasFunctionChanged = false;
     workList.clear();
     modeChanges.clear();
-    bbModes.clear();
+    blockModes.clear();
 
     if (CurFunc.isDeclaration())
       continue;
@@ -239,46 +237,12 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     unsigned lastIdNum = 0;
 
     for (auto *e : workList) {
-      if (!DLP.hasWork(e))
-        continue;
-
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       if (al.hasAnnotatedId(*e))
         lastIdNum = al.getAnnotatedId(*e);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
-      llvm::SmallVector<llvm::BasicBlock *, 16> bbWorkList;
-      bbWorkList.append(e->block_begin(), e->block_end());
-
-      for (auto *bb : bbWorkList) {
-        auto *firstI = bb->getFirstNonPHI();
-
-        IteratorRecognitionMode lastMode = GetMode(*firstI, *e, DLP);
-        bool hasAllSameModeInstructions = true;
-
-        for (llvm::BasicBlock::iterator ii = bb->getFirstNonPHI(),
-                                        ie = bb->end();
-             ii != ie; ++ii) {
-          auto &inst = *ii;
-          IteratorRecognitionMode instMode = GetMode(inst, *e, DLP);
-
-          if (lastMode == instMode)
-            continue;
-
-          hasAllSameModeInstructions = false;
-          auto modeChangePt = std::make_pair(&inst, instMode);
-          if (modeChanges.find(bb) == modeChanges.end())
-            modeChanges.emplace(bb, std::vector<ModeChangePointTy>{});
-
-          modeChanges.at(bb).push_back(modeChangePt);
-          lastMode = instMode;
-        }
-
-        if (hasAllSameModeInstructions)
-          bbModes.emplace(bb, lastMode);
-        else
-          numLoopsToAlterPerFunction++;
-      }
+      FindPartitionPoints(*e, DLP, blockModes, modeChanges);
     }
 
     // xform part
@@ -289,32 +253,33 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     for (auto &e : modeChanges) {
       auto *oldBB = e.first;
-      IteratorRecognitionMode mode;
+      IteratorRecognition::Mode mode;
       std::reverse(e.second.begin(), e.second.end());
+
       for (auto &k : e.second) {
         auto *splitI = k.first;
         mode = k.second;
         auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
         hasModuleChanged |= true;
         hasFunctionChanged = true;
-        bbModes.emplace(newBB, mode);
+        blockModes.emplace(newBB, mode);
 
         if (shouldReport)
           FunctionsAltered.insert(CurFunc.getName());
       }
 
-      bbModes.emplace(oldBB, InvertMode(mode));
+      blockModes.emplace(oldBB, InvertMode(mode));
     }
 
-    for (auto &e : bbModes) {
+    for (auto &e : blockModes) {
       llvm::StringRef name = "";
       if (e.first->hasName()) {
         name = e.first->getName();
       }
 
       llvm::StringRef prefix;
-      e.second == IteratorRecognitionMode::PayloadMode ? prefix = "pd_"
-                                                       : prefix = "it_";
+      e.second == IteratorRecognition::Mode::Payload ? prefix = "pd_"
+                                                     : prefix = "it_";
 
       e.first->setName(prefix + name);
     }
