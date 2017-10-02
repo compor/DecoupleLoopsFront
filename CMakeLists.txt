@@ -117,6 +117,7 @@ endif()
 set(LIB_NAME "LLVM${PRJ_NAME}Pass")
 set(LIB_SOURCES 
   "lib/DecoupleLoopsFront.cpp"
+  "lib/DecoupleLoopsFrontAnnotator.cpp"
   "lib/DecoupleLoopsFrontPass.cpp")
 
 if(NOT PRJ_USE_LLVM_INTERNAL_MODULE)

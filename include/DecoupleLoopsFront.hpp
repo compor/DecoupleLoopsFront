@@ -5,6 +5,8 @@
 #ifndef DECOUPLELOOPSFRONT_HPP
 #define DECOUPLELOOPSFRONT_HPP
 
+#include "Config.hpp"
+
 #if DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
 #include "DecoupleLoops.h"
 #endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
@@ -75,6 +77,6 @@ void SplitAtPartitionPoints(
     IteratorRecognition::BlockModeMapTy &Modes,
     llvm::DominatorTree *DT = nullptr, llvm::LoopInfo *LI = nullptr);
 
-} // namespace icsa end
+} // namespace icsa
 
 #endif // header

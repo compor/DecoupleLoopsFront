@@ -2,7 +2,6 @@
 //
 //
 
-#include "Config.hpp"
 #include "DecoupleLoopsFront.hpp"
 
 #include "llvm/IR/BasicBlock.h"

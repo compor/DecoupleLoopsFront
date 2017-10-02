@@ -2,13 +2,9 @@
 //
 //
 
-#include "Config.hpp"
-
-#include "Utils.hpp"
-
-#include "DecoupleLoopsFront.hpp"
-
 #include "DecoupleLoopsFrontPass.hpp"
+#include "DecoupleLoopsFront.hpp"
+#include "Utils.hpp"
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 #include "AnnotateLoops.hpp"

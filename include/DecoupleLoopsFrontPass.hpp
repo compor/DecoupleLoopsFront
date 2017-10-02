@@ -5,7 +5,7 @@
 #ifndef DECOUPLELOOPSFRONTPASS_HPP
 #define DECOUPLELOOPSFRONTPASS_HPP
 
-#include "Utils.hpp"
+#include "Config.hpp"
 
 #include "llvm/Pass.h"
 // using llvm::ModulePass
