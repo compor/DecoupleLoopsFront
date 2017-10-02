@@ -8,8 +8,18 @@
 #include "llvm/IR/BasicBlock.h"
 // using llvm::BasicBlock
 
+#include "llvm/IR/Dominators.h"
+// using llvm::DominatorTree
+
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::Loop
+// using llvm::LoopInfo
+
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+// using llvm::SplitBlock
+
+#include <algorithm>
+// using std::reverse
 
 namespace icsa {
 
@@ -53,6 +63,27 @@ bool FindPartitionPoints(
   }
 
   return found;
+}
+
+void SplitAtPartitionPoints(
+    IteratorRecognition::BlockModeChangePointMapTy &Points,
+    IteratorRecognition::BlockModeMapTy &Modes, llvm::DominatorTree *DT,
+    llvm::LoopInfo *LI) {
+  for (auto &e : Points) {
+    auto *oldBB = e.first;
+    IteratorRecognition::Mode lastMode;
+    std::reverse(e.second.begin(), e.second.end());
+
+    for (auto &k : e.second) {
+      auto *splitI = k.first;
+      lastMode = k.second;
+      Modes.emplace(llvm::SplitBlock(oldBB, splitI, DT, LI), lastMode);
+    }
+
+    Modes.emplace(oldBB, InvertMode(lastMode));
+  }
+
+  return;
 }
 
 } // namespace icsa

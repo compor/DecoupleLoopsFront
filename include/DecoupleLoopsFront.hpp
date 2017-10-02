@@ -24,7 +24,9 @@
 namespace llvm {
 class Instruction;
 class BasicBlock;
+class LoopInfo;
 class Loop;
+class DominatorTree;
 } // namespace llvm end
 
 namespace icsa {
@@ -67,6 +69,11 @@ bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,
     IteratorRecognition::BlockModeChangePointMapTy &Points);
+
+void SplitAtPartitionPoints(
+    IteratorRecognition::BlockModeChangePointMapTy &Points,
+    IteratorRecognition::BlockModeMapTy &Modes,
+    llvm::DominatorTree *DT = nullptr, llvm::LoopInfo *LI = nullptr);
 
 } // namespace icsa end
 

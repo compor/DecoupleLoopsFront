@@ -36,6 +36,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 // using llvm::LoopInfoWrapperPass
 // using llvm::LoopInfo
+// using llvm::Loop
 
 #include "llvm/IR/LegacyPassManager.h"
 // using llvm::PassManagerBase
@@ -43,9 +44,6 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 // using llvm::PassManagerBuilder
 // using llvm::RegisterStandardPasses
-
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-// using llvm::SplitBlock
 
 #include "llvm/Transforms/Scalar.h"
 // using char llvm::LoopInfoSimplifyID
@@ -233,7 +231,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     std::for_each(DLPLI.begin(), DLPLI.end(), loopsFilter);
     std::reverse(workList.begin(), workList.end());
 
-    unsigned numLoopsToAlterPerFunction = 0;
     unsigned lastIdNum = 0;
 
     for (auto *e : workList) {
@@ -246,39 +243,26 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     // xform part
-    // clang-format off
-    DEBUG_CMD(if (modeChanges.size())
-              llvm::errs() << "transform func: " << CurFunc.getName() << "\n");
-    // clang-format on
+    if (modeChanges.size()) {
+      DEBUG_CMD(llvm::errs() << "transform func: " << CurFunc.getName()
+                             << "\n");
 
-    for (auto &e : modeChanges) {
-      auto *oldBB = e.first;
-      IteratorRecognition::Mode mode;
-      std::reverse(e.second.begin(), e.second.end());
+      SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 
-      for (auto &k : e.second) {
-        auto *splitI = k.first;
-        mode = k.second;
-        auto *newBB = llvm::SplitBlock(oldBB, splitI, &DT, &LI);
-        hasModuleChanged |= true;
-        hasFunctionChanged = true;
-        blockModes.emplace(newBB, mode);
+      for (auto &e : blockModes)
+        e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
-        if (shouldReport)
-          FunctionsAltered.insert(CurFunc.getName());
-      }
+      if (shouldReport)
+        FunctionsAltered.insert(CurFunc.getName());
 
-      blockModes.emplace(oldBB, InvertMode(mode));
+      hasModuleChanged = hasFunctionChanged = true;
     }
-
-    for (auto &e : blockModes)
-      e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
     if (DotCFGOnly && hasFunctionChanged) {
       std::string extraId{""};
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-      if (numLoopsToAlterPerFunction == 1)
+      if (workList.size() == 1)
         extraId = "." + std::to_string(lastIdNum);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
