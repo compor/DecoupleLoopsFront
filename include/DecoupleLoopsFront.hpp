@@ -9,6 +9,9 @@
 #include "DecoupleLoops.h"
 #endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
 
+#include "llvm/ADT/StringRef.h"
+// using llvm::StringRef
+
 #include <map>
 // using std::map
 
@@ -54,6 +57,10 @@ inline IteratorRecognition::Mode GetMode(const llvm::Instruction &Inst,
   namespace itr = IteratorRecognition;
 
   return DLP.isWork(Inst, &CurLoop) ? itr::Mode::Payload : itr::Mode::Iterator;
+}
+
+inline llvm::StringRef GetModePrefix(IteratorRecognition::Mode mode) {
+  return mode == IteratorRecognition::Mode::Payload ? "pd_" : "it_";
 }
 
 bool FindPartitionPoints(

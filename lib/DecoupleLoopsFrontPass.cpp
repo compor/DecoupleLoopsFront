@@ -271,13 +271,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       blockModes.emplace(oldBB, InvertMode(mode));
     }
 
-    for (auto &e : blockModes) {
-      llvm::StringRef prefix;
-      e.second == IteratorRecognition::Mode::Payload ? prefix = "pd_"
-                                                     : prefix = "it_";
-
-      e.first->setName(prefix + e.first->getName());
-    }
+    for (auto &e : blockModes)
+      e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
     if (DotCFGOnly && hasFunctionChanged) {
       std::string extraId{""};
