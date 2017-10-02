@@ -51,6 +51,9 @@
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
+#include "llvm/ADT/StringRef.h"
+// using llvm::StringRef
+
 #include "llvm/Support/GraphWriter.h"
 // using llvm:WriteGraph
 
@@ -159,6 +162,23 @@ static llvm::cl::opt<bool, true>
 
 namespace {
 
+void WriteGraphFile(const llvm::Function &Func,
+                    llvm::StringRef DotFilenameSuffix,
+                    llvm::StringRef DotDirectory = ".") {
+  auto dotFilename =
+      (DotDirectory + "/cfg." + Func.getName() + DotFilenameSuffix + ".dot")
+          .str();
+
+  DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
+  std::error_code ec;
+  llvm::raw_fd_ostream dotFile(dotFilename, ec, llvm::sys::fs::F_Text);
+
+  if (!ec)
+    llvm::WriteGraph(dotFile, &Func, llvm::sys::fs::F_Text);
+  else
+    DEBUG_CMD(llvm::errs() << "error writing file: " << dotFilename << "\n");
+}
+
 using FunctionName_t = std::string;
 
 std::set<FunctionName_t> FunctionsAltered;
@@ -235,8 +255,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     for (auto *e : workList) {
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-      if (al.hasAnnotatedId(*e))
-        lastIdNum = al.getAnnotatedId(*e);
+      lastIdNum = al.getAnnotatedId(*e);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
       FindPartitionPoints(*e, DLP, blockModes, modeChanges);
@@ -259,26 +278,14 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     if (DotCFGOnly && hasFunctionChanged) {
-      std::string extraId{""};
+      llvm::StringRef strId{""};
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       if (workList.size() == 1)
-        extraId = "." + std::to_string(lastIdNum);
+        strId = "." + std::to_string(lastIdNum);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
-      auto dotFilename =
-          (DotDirectory + "/cfg." + CurFunc.getName() + extraId + ".dot").str();
-
-      DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
-      std::error_code ec;
-      llvm::raw_fd_ostream dotFile(dotFilename, ec, llvm::sys::fs::F_Text);
-
-      if (!ec)
-        llvm::WriteGraph(dotFile, (const llvm::Function *)&CurFunc,
-                         llvm::sys::fs::F_Text);
-      else
-        DEBUG_CMD(llvm::errs() << "error writing file: " << dotFilename
-                               << "\n");
+      WriteGraphFile(CurFunc, strId, DotDirectory);
     }
   }
 
