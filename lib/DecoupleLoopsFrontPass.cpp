@@ -272,16 +272,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     for (auto &e : blockModes) {
-      llvm::StringRef name = "";
-      if (e.first->hasName()) {
-        name = e.first->getName();
-      }
-
       llvm::StringRef prefix;
       e.second == IteratorRecognition::Mode::Payload ? prefix = "pd_"
                                                      : prefix = "it_";
 
-      e.first->setName(prefix + name);
+      e.first->setName(prefix + e.first->getName());
     }
 
     if (DotCFGOnly && hasFunctionChanged) {
