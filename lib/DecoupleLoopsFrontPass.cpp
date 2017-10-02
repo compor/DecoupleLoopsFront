@@ -65,9 +65,6 @@
 #include "llvm/Support/FileSystem.h"
 // using llvm::sys::fs
 
-#include <map>
-// using std::map
-
 #include <set>
 // using std::set
 
@@ -159,25 +156,57 @@ void WriteGraphFile(const llvm::Function &Func,
     DEBUG_CMD(llvm::errs() << "error writing file: " << dotFilename << "\n");
 }
 
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+std::set<unsigned int> ModifiedLoops;
+std::set<unsigned int> UnmodifiedLoops;
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+
 using FunctionName_t = std::string;
 
-std::set<FunctionName_t> FunctionsAltered;
+std::set<FunctionName_t> ModifiedFunctions;
 
-void Report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
+void Report(llvm::StringRef FilenamePrefix) {
   std::error_code err;
 
-  auto filename = FilenamePrefix.str() + FilenameSuffix.str() + ".txt";
-  llvm::raw_fd_ostream report(filename, err, llvm::sys::fs::F_Text);
+  auto filename = FilenamePrefix.str() + "ModifiedFunctions" + ".txt";
+  llvm::raw_fd_ostream report1(filename, err, llvm::sys::fs::F_Text);
 
-  if (err)
+  if (!err)
+    for (const auto &e : ModifiedFunctions)
+      report1 << e << "\n";
+  else
     llvm::errs() << "could not open file: \"" << filename
                  << "\" reason: " << err.message() << "\n";
-  else {
-    for (const auto &e : FunctionsAltered)
-      report << e << "\n";
-  }
 
-  report.close();
+  report1.close();
+
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+  filename = FilenamePrefix.str() + "ModifiedLoops" + ".txt";
+  llvm::raw_fd_ostream report2(filename, err, llvm::sys::fs::F_Text);
+
+  if (!err)
+    for (const auto &e : ModifiedLoops)
+      report2 << e << "\n";
+  else
+    llvm::errs() << "could not open file: \"" << filename
+                 << "\" reason: " << err.message() << "\n";
+
+  report2.close();
+
+  //
+
+  filename = FilenamePrefix.str() + "UnmodifiedLoops" + ".txt";
+  llvm::raw_fd_ostream report3(filename, err, llvm::sys::fs::F_Text);
+
+  if (!err)
+    for (const auto &e : UnmodifiedLoops)
+      report3 << e << "\n";
+  else
+    llvm::errs() << "could not open file: \"" << filename
+                 << "\" reason: " << err.message() << "\n";
+
+  report3.close();
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
   return;
 }
@@ -193,10 +222,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
   llvm::SmallVector<llvm::Loop *, 16> workList;
-
-#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-  std::set<unsigned int> loopIDs;
-#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
   for (auto &CurFunc : CurMod) {
     hasFunctionChanged = false;
@@ -232,8 +257,14 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     std::for_each(DLPLI.begin(), DLPLI.end(), loopsFilter);
     std::reverse(workList.begin(), workList.end());
 
-    for (auto *e : workList)
-      FindPartitionPoints(*e, DLP, blockModes, modeChanges);
+    for (auto *e : workList) {
+      bool found = FindPartitionPoints(*e, DLP, blockModes, modeChanges);
+
+#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+      auto id = al.getAnnotatedId(*e);
+      found ? ModifiedLoops.insert(id) : UnmodifiedLoops.insert(id);
+#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+    }
 
     // transform part
     if (modeChanges.size()) {
@@ -245,7 +276,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
       if (shouldReport)
-        FunctionsAltered.insert(CurFunc.getName());
+        ModifiedFunctions.insert(CurFunc.getName());
 
       hasModuleChanged = hasFunctionChanged = true;
     }
@@ -263,7 +294,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   }
 
   if (shouldReport)
-    Report(ReportFilenamePrefix, "FunctionsAltered");
+    Report(ReportFilenamePrefix);
 
   return hasModuleChanged;
 }
