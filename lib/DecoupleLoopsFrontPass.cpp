@@ -113,9 +113,12 @@ static llvm::RegisterStandardPasses
 
 //
 
-static llvm::cl::opt<bool> AnnotateWithMetadata(
-    "dlf-md-annotate",
-    llvm::cl::desc("annotate each loop basic block with metadata"));
+static llvm::cl::opt<bool> AnnotateBlocksWithType(
+    "dlf-bb-annotate",
+    llvm::cl::desc("annotate each basic block with type using metadata"));
+
+static llvm::cl::opt<bool> PrefixBlocksWithType(
+    "dlf-bb-prefix", llvm::cl::desc("prefix with type each basic block name"));
 
 static llvm::cl::opt<bool>
     DotCFGOnly("dlf-dot-cfg-only",
@@ -273,10 +276,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 
-      for (auto &e : blockModes)
-        e.first->setName(GetModePrefix(e.second) + e.first->getName());
+      if (PrefixBlocksWithType)
+        for (auto &e : blockModes)
+          e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
-      if (AnnotateWithMetadata)
+      if (AnnotateBlocksWithType)
         for (auto &e : blockModes)
           IteratorRecognition::Annotate(*e.first, e.second);
 
