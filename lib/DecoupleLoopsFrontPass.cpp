@@ -2,8 +2,9 @@
 //
 //
 
-#include "DecoupleLoopsFrontPass.hpp"
 #include "DecoupleLoopsFront.hpp"
+#include "DecoupleLoopsFrontPass.hpp"
+#include "DecoupleLoopsFrontAnnotator.hpp"
 #include "Utils.hpp"
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
@@ -111,6 +112,10 @@ static llvm::RegisterStandardPasses
                                    registerDecoupleLoopsFrontPass);
 
 //
+
+static llvm::cl::opt<bool> AnnotateWithMetadata(
+    "dlf-md-annotate",
+    llvm::cl::desc("annotate each loop basic block with metadata"));
 
 static llvm::cl::opt<bool>
     DotCFGOnly("dlf-dot-cfg-only",
@@ -270,6 +275,10 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
       for (auto &e : blockModes)
         e.first->setName(GetModePrefix(e.second) + e.first->getName());
+
+      if (AnnotateWithMetadata)
+        for (auto &e : blockModes)
+          IteratorRecognition::Annotate(*e.first, e.second);
 
       if (shouldReport)
         ModifiedFunctions.insert(CurFunc.getName());
