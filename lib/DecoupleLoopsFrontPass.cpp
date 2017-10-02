@@ -237,10 +237,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
     AnnotateLoops al;
+    unsigned singleId = 0;
 
     auto loopsFilter = [&](auto *e) {
       if (al.hasAnnotatedId(*e)) {
-        auto id = al.getAnnotatedId(*e);
+        auto singleId = al.getAnnotatedId(*e);
         workList.push_back(e);
       }
     };
@@ -251,20 +252,12 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     std::for_each(DLPLI.begin(), DLPLI.end(), loopsFilter);
     std::reverse(workList.begin(), workList.end());
 
-    unsigned lastIdNum = 0;
-
-    for (auto *e : workList) {
-#if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-      lastIdNum = al.getAnnotatedId(*e);
-#endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-
+    for (auto *e : workList)
       FindPartitionPoints(*e, DLP, blockModes, modeChanges);
-    }
 
-    // xform part
+    // transform part
     if (modeChanges.size()) {
-      DEBUG_CMD(llvm::errs() << "transform func: " << CurFunc.getName()
-                             << "\n");
+      DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 
@@ -282,7 +275,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       if (workList.size() == 1)
-        strId = "." + std::to_string(lastIdNum);
+        strId = "." + std::to_string(singleId);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
       WriteGraphFile(CurFunc, strId, DotDirectory);
