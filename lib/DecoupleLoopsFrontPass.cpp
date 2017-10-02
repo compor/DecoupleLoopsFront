@@ -17,9 +17,6 @@
 #include "llvm/Pass.h"
 // using llvm::RegisterPass
 
-#include "llvm/IR/Type.h"
-// using llvm::Type
-
 #include "llvm/IR/Instruction.h"
 // using llvm::Instruction
 
@@ -59,24 +56,14 @@
 
 #include "llvm/Support/CommandLine.h"
 // using llvm::cl::opt
-// using llvm::cl::list
 // using llvm::cl::desc
-// using llvm::cl::value_desc
 // using llvm::cl::location
-// using llvm::cl::ZeroOrMore
 
 #include "llvm/Support/raw_ostream.h"
 // using llvm::raw_ostream
 
 #include "llvm/Support/FileSystem.h"
 // using llvm::sys::fs
-
-#include "llvm/Support/Debug.h"
-// using DEBUG macro
-// using llvm::dbgs
-
-#include <vector>
-// using std::vector
 
 #include <map>
 // using std::map
@@ -90,16 +77,9 @@
 
 #include <string>
 // using std::string
-// using std::stoul
-
-#include <fstream>
-// using std::ifstream
 
 #include <system_error>
 // using std::error_code
-
-#include <cassert>
-// using assert
 
 #define DEBUG_TYPE "decouple-loops-front"
 
