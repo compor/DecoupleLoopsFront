@@ -163,7 +163,7 @@ using FunctionName_t = std::string;
 
 std::set<FunctionName_t> FunctionsAltered;
 
-void report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
+void Report(llvm::StringRef FilenamePrefix, llvm::StringRef FilenameSuffix) {
   std::error_code err;
 
   auto filename = FilenamePrefix.str() + FilenameSuffix.str() + ".txt";
@@ -283,7 +283,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   }
 
   if (shouldReport)
-    report(ReportFilenamePrefix, "FunctionsAltered");
+    Report(ReportFilenamePrefix, "FunctionsAltered");
 
   return hasModuleChanged;
 }
