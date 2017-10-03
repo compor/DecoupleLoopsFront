@@ -7,6 +7,9 @@
 #include "llvm/IR/BasicBlock.h"
 // using llvm::BasicBlock
 
+#include "llvm/IR/Instructions.h"
+// using llvm::BranchInst
+
 #include "llvm/IR/Dominators.h"
 // using llvm::DominatorTree
 
@@ -26,10 +29,8 @@ bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,
     IteratorRecognition::BlockModeChangePointMapTy &Points) {
-  bool found = false;
-
   if (!DLP.hasWork(&CurLoop))
-    return found;
+    return false;
 
   for (auto bi = CurLoop.block_begin(), be = CurLoop.block_end(); bi != be;
        ++bi) {
@@ -41,10 +42,11 @@ bool FindPartitionPoints(
     for (llvm::BasicBlock::iterator ii = firstI, ie = bb->end(); ii != ie;
          ++ii) {
       auto &inst = *ii;
+      auto *br = llvm::dyn_cast<llvm::BranchInst>(&inst);
+      bool isUncondBr = br && br->isUnconditional();
       auto curMode = GetMode(inst, CurLoop, DLP);
 
-      if (lastSeenMode != curMode) {
-        found = true;
+      if (lastSeenMode != curMode && !isUncondBr) {
         hasAllSameModeInstructions = false;
         auto modeChangePt = std::make_pair(&inst, curMode);
 
@@ -61,7 +63,7 @@ bool FindPartitionPoints(
       Modes.emplace(bb, lastSeenMode);
   }
 
-  return found;
+  return true;
 }
 
 void SplitAtPartitionPoints(

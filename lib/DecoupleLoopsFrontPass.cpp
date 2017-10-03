@@ -270,7 +270,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     }
 
     // transform part
-    if (modeChanges.size()) {
+    if (modeChanges.size() || blockModes.size()) {
       DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
