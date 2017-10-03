@@ -246,13 +246,11 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
     AnnotateLoops al;
-    unsigned singleId = 0;
+    unsigned lastSeenID = 0;
 
     auto loopsFilter = [&](auto *e) {
-      if (al.hasAnnotatedId(*e)) {
-        auto singleId = al.getAnnotatedId(*e);
+      if (al.hasAnnotatedId(*e))
         workList.push_back(e);
-      }
     };
 #else
     auto loopsFilter = [&](auto *e) { workList.push_back(e); };
@@ -265,8 +263,9 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       bool found = FindPartitionPoints(*e, DLP, blockModes, modeChanges);
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-      auto id = al.getAnnotatedId(*e);
-      found ? ModifiedLoops.insert(id) : UnmodifiedLoops.insert(id);
+      lastSeenID = al.getAnnotatedId(*e);
+      found ? ModifiedLoops.insert(lastSeenID)
+            : UnmodifiedLoops.insert(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
     }
 
@@ -295,7 +294,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       if (workList.size() == 1)
-        strId = "." + std::to_string(singleId);
+        strId = "." + std::to_string(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
       WriteGraphFile(CurFunc, strId, DotDirectory);
@@ -318,4 +317,5 @@ void DecoupleLoopsFrontPass::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 
   return;
 }
+
 } // namespace icsa end
