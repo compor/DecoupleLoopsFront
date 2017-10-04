@@ -35,10 +35,8 @@ enum class PayloadWeights : PayloadWeightTy {
   Cast = 1,
   DebugIntrinic = 1,
   Instruction = 2,
-  Call = 10,
-  IndirectCall = 15,
   Memory = 20,
-  MemoryIntrinsics = 20,
+  Call = 35,
   Maximum = std::numeric_limits<PayloadWeightTy>::max()
 };
 
