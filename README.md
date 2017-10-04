@@ -1,11 +1,16 @@
 
-# LLVM Loop Runtime Profiler opt pass
+# LLVM Decouple Loops Front opt pass
 
-A loop runtime profiler for LLVM's opt tool which instruments loops for measuring their runtime execution time.
+This is a LLVM preparatory opt pass for the [Decouple Loops](https://github.com/compor/icsa-dswp) pass.
+
+It splits the basic blocks of a loop to either all iterator-contributing instructions or otherwise.
 
 ## How to Build
 
-- make sure clang/clang++ is in your `$PATH`
+- make sure clang/clang++ is in your `$PATH` along with required environment variables (see `utils/scripts/` directory):
+  - compiler selection is catered by the `exports_local_*` scripts under `utils/scripts` directory for my current 
+    machine, so adjust appropriately for your setup.
+  - export one of the `exports_dep_*` scripts, depending on the kind of setup you are interested in.
 - `mkdir my-build-dir`
 - optionally `mkdir my-install-dir`
 - `[path to repo]/utils/build.sh [path torepo] [path to installation dir]`
@@ -18,12 +23,12 @@ A loop runtime profiler for LLVM's opt tool which instruments loops for measurin
 ### Using opt
 
 - make sure LLVM's opt is in your `$PATH`
-- `opt -load [path to plugin]/libLLVMLoopRuntimeProfilerPass.so -loop-runtime-profiler foo.bc -o foo.out.bc`
+- `opt -load [path to plugin]/libLLVMDecoupleLoopsFrontPass.so -decouple-loops-front foo.bc -o foo.out.bc`
 
 ### Using clang
 
 - make sure LLVM's clang is in your `$PATH`
-- `clang -Xclang -load -Xclang [path to plugin]/libLLVMLoopRuntimeProfilerPass.so foo.c -o foo`
+- `clang -Xclang -load -Xclang [path to plugin]/libLLVMDecoupleLoopsFrontPass.so foo.c -o foo`
    
 ## Requirements
 
