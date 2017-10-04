@@ -44,17 +44,13 @@ PayloadWeightTy &operator+=(PayloadWeightTy &lhs, const PayloadWeights &rhs) {
 
 class PayloadWeightCalculator
     : public llvm::InstVisitor<PayloadWeightCalculator> {
-
   PayloadWeightTy m_Cost;
 
 public:
   PayloadWeightCalculator() : m_Cost(0) {}
 
-  // disable these calls
-  void visit(llvm::Module *);
-  void visit(llvm::Module &);
-  void visit(llvm::Function *);
-  void visit(llvm::Function &);
+  PayloadWeightTy getWeight() const { return m_Cost; }
+  void reset() { m_Cost = 0; }
 
   void visitLoadInst(llvm::LoadInst &Inst) { m_Cost += PayloadWeights::Memory; }
   void visitCastInst(llvm::CastInst &Inst) { m_Cost += PayloadWeights::Cast; }
