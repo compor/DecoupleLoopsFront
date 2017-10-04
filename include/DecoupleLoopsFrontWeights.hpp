@@ -33,7 +33,7 @@ using BlockPayloadMapTy = std::map<llvm::BasicBlock *, PayloadWeightTy>;
 enum class PayloadWeights : PayloadWeightTy {
   Minimum = std::numeric_limits<PayloadWeightTy>::min(),
   Cast = 1,
-  DebugIntrinic = 1,
+  DebugIntrinsic = 1,
   Instruction = 2,
   Memory = 20,
   Call = 35,
