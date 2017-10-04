@@ -9,7 +9,9 @@ namespace icsa {
 
 namespace IteratorRecognition {
 
-enum class PayloadWeights : unsigned {
+using PayloadWeightTy = unsigned;
+
+enum class PayloadWeights : PayloadWeightTy {
   Cast = 1,
   DebugIntrinic = 1,
   Instruction = 2,
