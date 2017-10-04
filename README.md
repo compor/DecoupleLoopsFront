@@ -7,9 +7,9 @@ It splits the basic blocks of a loop to either all iterator-contributing instruc
 
 ## How to Build
 
-- make sure clang/clang++ is in your `$PATH` along with required environment variables (see `utils/scripts/` directory):
-  - compiler selection is catered by the `exports_local_*` scripts under `utils/scripts` directory for my current 
-    machine, so adjust appropriately for your setup.
+- make sure the required environment variables are exported (see `utils/scripts/build` directory):
+  - compiler selection is catered by the `exports_local_*` scripts using the `CC` and `CXX` variables for my current 
+   machine, so adjust appropriately for your setup.
   - export one of the `exports_deps_*` scripts, depending on the kind of setup you are interested in.
 - `mkdir my-build-dir`
 - optionally `mkdir my-install-dir`
