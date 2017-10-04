@@ -5,24 +5,48 @@
 #ifndef DECOUPLELOOPSFRONTWEIGHTS_HPP
 #define DECOUPLELOOPSFRONTWEIGHTS_HPP
 
-namespace icsa {
+#include "Config.hpp"
 
+#if DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
+#include "DecoupleLoops.h"
+#endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
+
+#include <map>
+// using std::map
+
+#include <limits>
+// using std::numeric_limits::min
+// using std::numeric_limits::max
+
+namespace llvm {
+class BasicBlock;
+class Loop;
+} // namespace llvm
+
+namespace icsa {
 namespace IteratorRecognition {
 
 using PayloadWeightTy = unsigned;
 
+using BlockPayloadMapTy = std::map<llvm::BasicBlock *, PayloadWeightTy>;
+
 enum class PayloadWeights : PayloadWeightTy {
+  Minimum = std::numeric_limits<PayloadWeightTy>::min(),
   Cast = 1,
   DebugIntrinic = 1,
   Instruction = 2,
   Call = 10,
   IndirectCall = 15,
   Memory = 20,
-  MemoryIntrinsics = 20
+  MemoryIntrinsics = 20,
+  Maximum = std::numeric_limits<PayloadWeightTy>::max()
 };
 
-} // namespace IteratorRecognition
+BlockPayloadMapTy
+calculatePayloadWeight(const llvm::Loop &CurLoop,
+                       const DecoupleLoopsPass *DLP = nullptr);
 
+} // namespace IteratorRecognition
 } // namespace icsa
 
 #endif // header
