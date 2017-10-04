@@ -1,0 +1,8 @@
+//
+//
+//
+
+#ifndef DECOUPLELOOPSFRONTWEIGHTS_HPP
+#define DECOUPLELOOPSFRONTWEIGHTS_HPP
+
+#endif // header
