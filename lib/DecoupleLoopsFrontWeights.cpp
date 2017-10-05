@@ -98,11 +98,21 @@ BlockPayloadMapTy calculatePayloadWeight(const llvm::Loop &CurLoop,
 
   llvm::SmallPtrSet<llvm::BasicBlock *, 16> workList;
 
-  std::for_each(CurLoop.block_begin(), CurLoop.block_end(), [&](auto &e) {
-    if (!DLP && HasAnnotateMode(*e) &&
-        GetAnnotatedMode(*e) == IteratorRecognition::Mode::Payload)
-      workList.insert(e);
-  });
+  if (DLP)
+    std::for_each(CurLoop.block_begin(), CurLoop.block_end(), [&](auto &e) {
+      assert(IsSingleMode(*e, CurLoop, *DLP) &&
+             "Loop basic block is not a single mode!");
+
+      if (GetMode(*e->begin(), CurLoop, *DLP) ==
+          IteratorRecognition::Mode::Payload)
+        workList.insert(e);
+    });
+  else
+    std::for_each(CurLoop.block_begin(), CurLoop.block_end(), [&](auto &e) {
+      if (HasAnnotateMode(*e) &&
+          GetAnnotatedMode(*e) == IteratorRecognition::Mode::Payload)
+        workList.insert(e);
+    });
 
   workList.erase(CurLoop.getLoopLatch());
   workList.erase(CurLoop.getHeader());
