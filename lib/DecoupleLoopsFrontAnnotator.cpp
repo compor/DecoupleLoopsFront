@@ -66,6 +66,11 @@ bool IsAnnotatedWithMode(const llvm::BasicBlock &BB) {
   return BB.getTerminator()->getMetadata(ModeMetadataKey) ? true : false;
 }
 
+bool IsAnnotatedWithPayloadWeight(const llvm::BasicBlock &BB) {
+  return BB.getTerminator()->getMetadata(PayloadWeightMetadataKey) ? true
+                                                                   : false;
+}
+
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB) {
   assert(IsAnnotatedWithMode(BB) &&
          "Terminator does not have required metadata!");
