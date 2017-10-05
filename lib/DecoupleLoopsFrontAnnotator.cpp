@@ -88,5 +88,19 @@ Mode GetAnnotatedMode(const llvm::BasicBlock &BB) {
     assert(false && "No matching mode could be found!");
 }
 
+PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB) {
+  assert(IsAnnotatedWithMode(BB) &&
+         "Basic block is not annotated with mode metadata!");
+
+  assert(IsAnnotatedWithPayloadWeight(BB) &&
+         "Terminator does not have required metadata!");
+
+  auto *term = BB.getTerminator();
+  auto mdW = llvm::cast<llvm::ConstantAsMetadata>(
+      term->getMetadata(ModeMetadataKey)->getOperand(0));
+
+  return mdW->getValue()->getUniqueInteger().getLimitedValue();
+}
+
 } // namespace IteratorRecognition
 } // namespace icsa

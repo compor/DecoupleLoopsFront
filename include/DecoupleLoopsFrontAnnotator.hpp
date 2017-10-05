@@ -25,6 +25,7 @@ void Annotate(llvm::BasicBlock &BB, const PayloadWeightTy &W);
 bool IsAnnotatedWithMode(const llvm::BasicBlock &BB);
 bool IsAnnotatedWithPayloadWeight(const llvm::BasicBlock &BB);
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB);
+PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB);
 
 } // namespace IteratorRecognition
 } // namespace icsa
