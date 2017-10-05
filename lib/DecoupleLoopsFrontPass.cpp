@@ -297,7 +297,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     if (AnnotateBlocksWithType && AnnotatePayloadBlocksWithWeight)
       for (auto &e : workList) {
-        auto weights = IteratorRecognition::calculatePayloadWeight(*e);
+        auto weights = IteratorRecognition::CalculatePayloadWeight(*e);
 
         for (const auto &k : weights)
           IteratorRecognition::Annotate(*k.first, k.second);

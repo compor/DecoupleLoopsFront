@@ -41,7 +41,7 @@ enum class PayloadWeights : PayloadWeightTy {
 };
 
 BlockPayloadMapTy
-calculatePayloadWeight(const llvm::Loop &CurLoop,
+CalculatePayloadWeight(const llvm::Loop &CurLoop,
                        const DecoupleLoopsPass *DLP = nullptr);
 
 } // namespace IteratorRecognition

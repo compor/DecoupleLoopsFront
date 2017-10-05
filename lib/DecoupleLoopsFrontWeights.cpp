@@ -92,7 +92,7 @@ public:
 
 } // namespace end
 
-BlockPayloadMapTy calculatePayloadWeight(const llvm::Loop &CurLoop,
+BlockPayloadMapTy CalculatePayloadWeight(const llvm::Loop &CurLoop,
                                          const DecoupleLoopsPass *DLP) {
   assert(CurLoop.isLoopSimplifyForm() && "Loop is not in simplify form!");
 
