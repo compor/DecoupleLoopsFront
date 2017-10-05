@@ -25,6 +25,21 @@
 
 namespace icsa {
 
+bool IsSingleMode(const llvm::BasicBlock &BB, const llvm::Loop &CurLoop,
+                  const DecoupleLoopsPass &DLP) {
+  auto lastSeenMode = GetMode(*BB.begin(), CurLoop, DLP);
+
+  for (const auto &e : BB) {
+    auto *br = llvm::dyn_cast<llvm::BranchInst>(&e);
+    bool isUncondBr = br && br->isUnconditional();
+
+    if (GetMode(e, CurLoop, DLP) != lastSeenMode && !isUncondBr)
+      return false;
+  }
+
+  return true;
+}
+
 bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,
