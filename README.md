@@ -5,6 +5,19 @@ This is a LLVM preparatory opt pass for the [Decouple Loops](https://github.com/
 
 It splits the basic blocks of a loop to either all iterator-contributing instructions or otherwise.
 
+## External Dependencies
+
+Use the corresponding export scripts under `utils/scripts/build` directory to satisfy the below listed dependencies.
+
+## Mandatory
+
+- [Decouple Loops](https://github.com/compor/icsa-dswp) pass
+
+## Optional
+
+- [Annotate Loops](https://github.com/compor/AnnotateLoops) pass
+
+
 ## How to Build
 
 - make sure the required environment variables are exported (see `utils/scripts/build` directory):
