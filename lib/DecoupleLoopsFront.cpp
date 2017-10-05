@@ -40,6 +40,29 @@ bool IsSingleMode(const llvm::BasicBlock &BB, const llvm::Loop &CurLoop,
   return true;
 }
 
+bool IsSingleMode(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP) {
+  auto bi = CurLoop.block_begin();
+
+  if (!IsSingleMode(**bi, CurLoop, DLP))
+    return false;
+
+  auto lastSeenMode = GetMode(*(*bi)->begin(), CurLoop, DLP);
+
+  ++bi;
+  for (auto be = CurLoop.block_end(); bi != be; ++bi) {
+    if (!IsSingleMode(**bi, CurLoop, DLP))
+      return false;
+
+    auto curMode = GetMode(*(*bi)->begin(), CurLoop, DLP);
+    if (lastSeenMode != curMode)
+      return false;
+
+    lastSeenMode = curMode;
+  }
+
+  return true;
+}
+
 bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,

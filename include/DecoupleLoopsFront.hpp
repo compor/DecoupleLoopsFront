@@ -70,6 +70,8 @@ inline llvm::StringRef GetModePrefix(IteratorRecognition::Mode mode) {
 bool IsSingleMode(const llvm::BasicBlock &BB, const llvm::Loop &CurLoop,
                   const DecoupleLoopsPass &DLP);
 
+bool IsSingleMode(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP);
+
 bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,
