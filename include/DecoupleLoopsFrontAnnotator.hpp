@@ -19,7 +19,7 @@ namespace IteratorRecognition {
 extern const llvm::StringRef MetadataKey;
 
 void Annotate(llvm::BasicBlock &BB, Mode M);
-bool HasAnnotateMode(const llvm::BasicBlock &BB);
+bool IsAnnotatedMode(const llvm::BasicBlock &BB);
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB);
 
 } // namespace IteratorRecognition

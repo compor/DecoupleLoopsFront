@@ -109,7 +109,7 @@ BlockPayloadMapTy calculatePayloadWeight(const llvm::Loop &CurLoop,
     });
   else
     std::for_each(CurLoop.block_begin(), CurLoop.block_end(), [&](auto &e) {
-      if (HasAnnotateMode(*e) &&
+      if (IsAnnotatedMode(*e) &&
           GetAnnotatedMode(*e) == IteratorRecognition::Mode::Payload)
         workList.insert(e);
     });

@@ -36,12 +36,13 @@ void Annotate(llvm::BasicBlock &BB, Mode M) {
   term->setMetadata(MetadataKey, node);
 }
 
-bool HasAnnotateMode(const llvm::BasicBlock &BB) {
+bool IsAnnotatedWithMode(const llvm::BasicBlock &BB) {
   return BB.getTerminator()->getMetadata(MetadataKey) ? true : false;
 }
 
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB) {
-  assert(HasAnnotateMode(BB) && "Terminator does not have required metadata!");
+  assert(IsAnnotatedWithMode(BB) &&
+         "Terminator does not have required metadata!");
 
   auto *term = BB.getTerminator();
   auto strMode =
