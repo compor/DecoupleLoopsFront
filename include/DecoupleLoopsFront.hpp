@@ -88,9 +88,10 @@ void SplitAtPartitionPoints(
 class PayloadPHIChecker : public llvm::InstVisitor<PayloadPHIChecker> {
   const llvm::Loop &m_CurLoop;
   const DecoupleLoopsPass &m_DLP;
-  std::set<std::string> m_FuncNames;
 
 public:
+  std::set<std::string> m_FuncNames;
+
   PayloadPHIChecker(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
       : m_CurLoop(CurLoop), m_DLP(DLP) {}
 

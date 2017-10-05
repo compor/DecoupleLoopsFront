@@ -174,6 +174,7 @@ std::set<unsigned int> UnmodifiedLoops;
 using FunctionName_t = std::string;
 
 std::set<FunctionName_t> ModifiedFunctions;
+std::set<FunctionName_t> PhiMismatchFunctions;
 
 void Report(llvm::StringRef FilenamePrefix) {
   std::error_code err;
@@ -217,6 +218,18 @@ void Report(llvm::StringRef FilenamePrefix) {
 
   report3.close();
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+
+  filename = FilenamePrefix.str() + "-PhiMismatchFunctions" + ".txt";
+  llvm::raw_fd_ostream report4(filename, err, llvm::sys::fs::F_Text);
+
+  if (!err)
+    for (const auto &e : PhiMismatchFunctions)
+      report4 << e << "\n";
+  else
+    llvm::errs() << "could not open file: \"" << filename
+                 << "\" reason: " << err.message() << "\n";
+
+  report4.close();
 
   return;
 }
@@ -274,11 +287,13 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
             : UnmodifiedLoops.insert(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
+      PayloadPHIChecker pdChecker(*e, DLP);
       for (const auto &k : blockModes)
-        if (k.second == IteratorRecognition::Mode::Payload) {
-          PayloadPHIChecker pdChecker(*e, DLP);
+        if (k.second == IteratorRecognition::Mode::Payload)
           pdChecker.visit(k.first);
-        }
+
+      PhiMismatchFunctions.insert(pdChecker.m_FuncNames.begin(),
+                                  pdChecker.m_FuncNames.end());
     }
 
     // transform part
