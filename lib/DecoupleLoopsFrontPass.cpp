@@ -273,6 +273,12 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       found ? ModifiedLoops.insert(lastSeenID)
             : UnmodifiedLoops.insert(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
+
+      for (const auto &k : blockModes)
+        if (k.second == IteratorRecognition::Mode::Payload) {
+          PayloadPHIChecker pdChecker(*e, DLP);
+          pdChecker.visit(k.first);
+        }
     }
 
     // transform part
