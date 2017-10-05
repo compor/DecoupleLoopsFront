@@ -11,6 +11,9 @@
 #include "DecoupleLoops.h"
 #endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
 
+#include "llvm/IR/InstVisitor.h"
+// using llvm::InstVisitor
+
 #include "llvm/ADT/StringRef.h"
 // using llvm::StringRef
 
@@ -81,6 +84,21 @@ void SplitAtPartitionPoints(
     IteratorRecognition::BlockModeChangePointMapTy &Points,
     IteratorRecognition::BlockModeMapTy &Modes,
     llvm::DominatorTree *DT = nullptr, llvm::LoopInfo *LI = nullptr);
+
+class PayloadPHIChecker : public llvm::InstVisitor<PayloadPHIChecker> {
+  const llvm::Loop &m_CurLoop;
+  const DecoupleLoopsPass &m_DLP;
+  std::set<std::string> m_FuncNames;
+
+public:
+  PayloadPHIChecker(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
+      : m_CurLoop(CurLoop), m_DLP(DLP) {}
+
+  void visitPHINode(llvm::PHINode &Inst) {
+    if (IteratorRecognition::Mode::Payload != GetMode(Inst, m_CurLoop, m_DLP))
+      m_FuncNames.insert(m_CurLoop.getHeader()->getParent()->getName().str());
+  }
+};
 
 } // namespace icsa
 
