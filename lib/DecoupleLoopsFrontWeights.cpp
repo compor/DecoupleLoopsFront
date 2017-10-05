@@ -105,6 +105,7 @@ BlockPayloadMapTy calculatePayloadWeight(const llvm::Loop &CurLoop,
   });
 
   workList.erase(CurLoop.getLoopLatch());
+  workList.erase(CurLoop.getHeader());
   BlockPayloadMapTy blockPayloadMap;
 
   for (auto *e : workList) {
