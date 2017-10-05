@@ -114,11 +114,12 @@ static llvm::RegisterStandardPasses
 //
 
 static llvm::cl::opt<bool> AnnotateBlocksWithType(
-    "dlf-bb-annotate",
+    "dlf-bb-annotate-type",
     llvm::cl::desc("annotate each basic block with type using metadata"));
 
 static llvm::cl::opt<bool> PrefixBlocksWithType(
-    "dlf-bb-prefix", llvm::cl::desc("prefix with type each basic block name"));
+    "dlf-bb-prefix-type",
+    llvm::cl::desc("prefix with type each basic block name"));
 
 static llvm::cl::opt<bool>
     DotCFGOnly("dlf-dot-cfg-only",
