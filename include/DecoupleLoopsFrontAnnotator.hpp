@@ -7,6 +7,7 @@
 
 #include "Config.hpp"
 #include "DecoupleLoopsFront.hpp"
+#include "DecoupleLoopsFrontWeights.hpp"
 
 namespace llvm {
 class StringRef;
@@ -16,10 +17,12 @@ class BasicBlock;
 namespace icsa {
 namespace IteratorRecognition {
 
-extern const llvm::StringRef MetadataKey;
+extern const llvm::StringRef ModeMetadataKey;
+extern const llvm::StringRef PayloadWeightMetadataKey;
 
 void Annotate(llvm::BasicBlock &BB, Mode M);
-bool IsAnnotatedMode(const llvm::BasicBlock &BB);
+void Annotate(llvm::BasicBlock &BB, const PayloadWeightTy &W);
+bool IsAnnotatedWithMode(const llvm::BasicBlock &BB);
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB);
 
 } // namespace IteratorRecognition
