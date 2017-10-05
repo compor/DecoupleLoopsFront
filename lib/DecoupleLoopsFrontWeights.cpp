@@ -44,49 +44,53 @@ PayloadWeightTy &operator+=(PayloadWeightTy &lhs, const PayloadWeights &rhs) {
 
 class PayloadWeightCalculator
     : public llvm::InstVisitor<PayloadWeightCalculator> {
-  PayloadWeightTy m_Cost;
+  PayloadWeightTy m_Weight;
 
 public:
-  PayloadWeightCalculator() : m_Cost(0) {}
+  PayloadWeightCalculator() : m_Weight(0) {}
 
-  PayloadWeightTy getWeight() const { return m_Cost; }
-  void reset() { m_Cost = 0; }
+  PayloadWeightTy getWeight() const { return m_Weight; }
+  void reset() { m_Weight = 0; }
 
-  void visitLoadInst(llvm::LoadInst &Inst) { m_Cost += PayloadWeights::Memory; }
-  void visitCastInst(llvm::CastInst &Inst) { m_Cost += PayloadWeights::Cast; }
-  void visitCallInst(llvm::CallInst &Inst) { m_Cost += PayloadWeights::Call; }
+  void visitLoadInst(llvm::LoadInst &Inst) {
+    m_Weight += PayloadWeights::Memory;
+  }
+
+  void visitCastInst(llvm::CastInst &Inst) { m_Weight += PayloadWeights::Cast; }
+
+  void visitCallInst(llvm::CallInst &Inst) { m_Weight += PayloadWeights::Call; }
 
   void visitStoreInst(llvm::StoreInst &Inst) {
-    m_Cost += PayloadWeights::Memory;
+    m_Weight += PayloadWeights::Memory;
   }
 
   void visitInstruction(Instruction &Inst) {
-    m_Cost += PayloadWeights::Instruction;
+    m_Weight += PayloadWeights::Instruction;
   }
 
   void visitDbgInfoIntrinsic(llvm::DbgInfoIntrinsic &Inst) {
-    m_Cost += PayloadWeights::DebugIntrinsic;
+    m_Weight += PayloadWeights::DebugIntrinsic;
   }
 
   void visitAllocaInst(llvm::AllocaInst &Inst) {
-    m_Cost += PayloadWeights::Memory;
+    m_Weight += PayloadWeights::Memory;
   }
 
   void visitGetElementPtrInst(llvm::GetElementPtrInst &Inst) {
-    m_Cost += PayloadWeights::Memory;
+    m_Weight += PayloadWeights::Memory;
   }
 
   void visitMemIntrinsic(llvm::MemIntrinsic &Inst) {
-    m_Cost += PayloadWeights::Memory;
+    m_Weight += PayloadWeights::Memory;
   }
 
   void visitTerminatorInst(llvm::TerminatorInst &Inst) {
     auto *br = llvm::dyn_cast<llvm::BranchInst>(&Inst);
 
     if (br && br->isUnconditional())
-      m_Cost += PayloadWeights::Minimum;
+      m_Weight += PayloadWeights::Minimum;
     else
-      m_Cost += PayloadWeights::Instruction;
+      m_Weight += PayloadWeights::Instruction;
   }
 };
 
