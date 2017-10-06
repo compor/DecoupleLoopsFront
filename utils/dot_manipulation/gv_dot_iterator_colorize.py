@@ -22,6 +22,9 @@ def gv_dot_iterator_colorize(infile, outfile):
         if dot_graph.node[n]['label'].startswith('{it_'):
             dot_graph.node[n]['style'] = 'filled'
             dot_graph.node[n]['fillcolor'] = 'aquamarine'
+        elif dot_graph.node[n]['label'].startswith('{pd_mix_'):
+            dot_graph.node[n]['style'] = 'filled'
+            dot_graph.node[n]['fillcolor'] = 'burlywood'
         elif dot_graph.node[n]['label'].startswith('{pd_'):
             dot_graph.node[n]['style'] = 'filled'
             dot_graph.node[n]['fillcolor'] = 'coral'
