@@ -179,7 +179,7 @@ std::set<FunctionName_t> PhiMismatchFunctions;
 void Report(llvm::StringRef FilenamePrefix) {
   std::error_code err;
 
-  auto filename = FilenamePrefix.str() + "-ModifiedFunctions" + ".txt";
+  auto filename = FilenamePrefix.str() + "-ModifiedFunctions.txt";
   llvm::raw_fd_ostream report1(filename, err, llvm::sys::fs::F_Text);
 
   if (!err)
@@ -192,7 +192,7 @@ void Report(llvm::StringRef FilenamePrefix) {
   report1.close();
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-  filename = FilenamePrefix.str() + "-ModifiedLoops" + ".txt";
+  filename = FilenamePrefix.str() + "-ModifiedLoops.txt";
   llvm::raw_fd_ostream report2(filename, err, llvm::sys::fs::F_Text);
 
   if (!err)
@@ -206,7 +206,7 @@ void Report(llvm::StringRef FilenamePrefix) {
 
   //
 
-  filename = FilenamePrefix.str() + "-UnmodifiedLoops" + ".txt";
+  filename = FilenamePrefix.str() + "-UnmodifiedLoops.txt";
   llvm::raw_fd_ostream report3(filename, err, llvm::sys::fs::F_Text);
 
   if (!err)
@@ -219,7 +219,7 @@ void Report(llvm::StringRef FilenamePrefix) {
   report3.close();
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
-  filename = FilenamePrefix.str() + "-PhiMismatchFunctions" + ".txt";
+  filename = FilenamePrefix.str() + "-PhiMismatchFunctions.txt";
   llvm::raw_fd_ostream report4(filename, err, llvm::sys::fs::F_Text);
 
   if (!err)
