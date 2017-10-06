@@ -73,6 +73,10 @@ void Annotate(llvm::BasicBlock &BB, const PayloadWeightTy &W) {
   term->setMetadata(PayloadWeightMetadataKey, node);
 }
 
+bool IsAnnotatedWithMode(const llvm::Instruction &Inst) {
+  return Inst.getMetadata(ModeMetadataKey) ? true : false;
+}
+
 bool IsAnnotatedWithMode(const llvm::BasicBlock &BB) {
   return BB.getTerminator()->getMetadata(ModeMetadataKey) ? true : false;
 }
@@ -80,6 +84,22 @@ bool IsAnnotatedWithMode(const llvm::BasicBlock &BB) {
 bool IsAnnotatedWithPayloadWeight(const llvm::BasicBlock &BB) {
   return BB.getTerminator()->getMetadata(PayloadWeightMetadataKey) ? true
                                                                    : false;
+}
+
+Mode GetAnnotatedMode(const llvm::Instruction &Inst) {
+  assert(IsAnnotatedWithMode(Inst) &&
+         "Instruction does not have required metadata!");
+
+  auto strMode = llvm::cast<llvm::MDString>(
+                     Inst.getMetadata(ModeMetadataKey)->getOperand(0))
+                     ->getString();
+
+  if (strIteratorMode == strMode)
+    return Mode::Iterator;
+  else if (strPayloadMode == strMode)
+    return Mode::Payload;
+  else
+    assert(false && "No matching mode could be found!");
 }
 
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB) {

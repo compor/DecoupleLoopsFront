@@ -29,8 +29,10 @@ extern const llvm::StringRef PayloadWeightMetadataKey;
 void Annotate(llvm::Instruction &Inst, Mode M);
 void Annotate(llvm::BasicBlock &BB, Mode M);
 void Annotate(llvm::BasicBlock &BB, const PayloadWeightTy &W);
+bool IsAnnotatedWithMode(const llvm::Instruction &Inst);
 bool IsAnnotatedWithMode(const llvm::BasicBlock &BB);
 bool IsAnnotatedWithPayloadWeight(const llvm::BasicBlock &BB);
+Mode GetAnnotatedMode(const llvm::Instruction &Inst);
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB);
 PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB);
 
