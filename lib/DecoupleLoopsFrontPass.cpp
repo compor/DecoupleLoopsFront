@@ -287,13 +287,14 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
             : UnmodifiedLoops.insert(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
-      PayloadPHIChecker pdChecker(*e, DLP);
       for (const auto &k : blockModes)
-        if (k.second == IteratorRecognition::Mode::Payload)
+        if (k.second == IteratorRecognition::Mode::Payload) {
+          PayloadPHIChecker pdChecker(*e, DLP);
           pdChecker.visit(k.first);
 
-      PhiMismatchFunctions.insert(pdChecker.m_FuncNames.begin(),
-                                  pdChecker.m_FuncNames.end());
+          if (pdChecker.getStatus())
+            PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
+        }
     }
 
     // transform part

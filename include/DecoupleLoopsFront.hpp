@@ -88,16 +88,18 @@ void SplitAtPartitionPoints(
 class PayloadPHIChecker : public llvm::InstVisitor<PayloadPHIChecker> {
   const llvm::Loop &m_CurLoop;
   const DecoupleLoopsPass &m_DLP;
+  bool m_Status;
 
 public:
-  std::set<std::string> m_FuncNames;
-
   PayloadPHIChecker(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
-      : m_CurLoop(CurLoop), m_DLP(DLP) {}
+      : m_Status(false), m_CurLoop(CurLoop), m_DLP(DLP) {}
+
+  // TODO maybe use safe bool idiom instead
+  bool getStatus() { return m_Status; }
 
   void visitPHINode(llvm::PHINode &Inst) {
     if (IteratorRecognition::Mode::Payload != GetMode(Inst, m_CurLoop, m_DLP))
-      m_FuncNames.insert(m_CurLoop.getHeader()->getParent()->getName().str());
+      m_Status = true;
   }
 };
 
