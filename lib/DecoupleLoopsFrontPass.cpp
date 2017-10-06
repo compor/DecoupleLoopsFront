@@ -252,6 +252,7 @@ const llvm::Loop *getOutermostLoop(const llvm::LoopInfo *LI,
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   IteratorRecognition::BlockModeChangePointMapTy modeChanges;
   IteratorRecognition::BlockModeMapTy blockModes;
+  std::set<llvm::BasicBlock *> phiMismatchBlocks;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
@@ -262,6 +263,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     workList.clear();
     modeChanges.clear();
     blockModes.clear();
+    phiMismatchBlocks.clear();
 
     if (CurFunc.isDeclaration())
       continue;
@@ -311,13 +313,22 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
           PayloadPHIChecker pdChecker(*outermostLoop, DLP);
           pdChecker.visit(k.first);
 
+          if (pdChecker.getStatus())
+            phiMismatchBlocks.insert(k.first);
+
           if (shouldReport && pdChecker.getStatus())
             PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
         }
 
       if (PrefixBlocksWithType)
-        for (auto &e : blockModes)
-          e.first->setName(GetModePrefix(e.second) + e.first->getName());
+        for (auto &e : blockModes) {
+          llvm::StringRef prefixPart{""};
+          if (phiMismatchBlocks.count(e.first))
+            prefixPart = "_mix_";
+
+          e.first->setName(GetModePrefix(e.second) + prefixPart +
+                           e.first->getName());
+        }
 
       if (AnnotateBlocksWithType)
         for (auto &e : blockModes) {
