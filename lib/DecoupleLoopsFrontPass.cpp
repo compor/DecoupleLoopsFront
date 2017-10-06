@@ -310,8 +310,15 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
           e.first->setName(GetModePrefix(e.second) + e.first->getName());
 
       if (AnnotateBlocksWithType)
-        for (auto &e : blockModes)
+        for (auto &e : blockModes) {
           IteratorRecognition::Annotate(*e.first, e.second);
+
+          if (e.second == IteratorRecognition::Mode::Payload) {
+            auto *outermostLoop = getOutermostLoop(&LI, e.first);
+            IteratorRecognition::PayloadPHIAnnotator pa(*outermostLoop, DLP);
+            pa.visit(e.first);
+          }
+        }
 
       if (shouldReport)
         ModifiedFunctions.insert(CurFunc.getName());
