@@ -299,16 +299,6 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
     }
 
-    for (auto &k : blockModes)
-      if (k.second == IteratorRecognition::Mode::Payload) {
-        auto *outermostLoop = getOutermostLoop(&LI, k.first);
-        PayloadPHIChecker pdChecker(*outermostLoop, DLP);
-        pdChecker.visit(k.first);
-
-        if (pdChecker.getStatus())
-          PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
-      }
-
     // transform part
     if (modeChanges.size() || blockModes.size()) {
       DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
@@ -328,6 +318,16 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
       hasModuleChanged = hasFunctionChanged = true;
     }
+
+    for (auto &k : blockModes)
+      if (k.second == IteratorRecognition::Mode::Payload) {
+        auto *outermostLoop = getOutermostLoop(&LI, k.first);
+        PayloadPHIChecker pdChecker(*outermostLoop, DLP);
+        pdChecker.visit(k.first);
+
+        if (pdChecker.getStatus())
+          PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
+      }
 
     if (AnnotateBlocksWithType && AnnotatePayloadBlocksWithWeight)
       for (auto &e : workList) {
