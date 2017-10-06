@@ -324,7 +324,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         for (auto &e : blockModes) {
           llvm::StringRef prefixPart{""};
           if (phiMismatchBlocks.count(e.first))
-            prefixPart = "_mix_";
+            prefixPart = "mix_";
 
           e.first->setName(GetModePrefix(e.second) + prefixPart +
                            e.first->getName());
