@@ -332,7 +332,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         PayloadPHIChecker pdChecker(*outermostLoop, DLP);
         pdChecker.visit(k.first);
 
-        if (pdChecker.getStatus())
+        if (shouldReport && pdChecker.getStatus())
           PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
       }
 
