@@ -11,6 +11,7 @@
 
 namespace llvm {
 class StringRef;
+class Instruction;
 class BasicBlock;
 } // namespace llvm
 
@@ -20,6 +21,7 @@ namespace IteratorRecognition {
 extern const llvm::StringRef ModeMetadataKey;
 extern const llvm::StringRef PayloadWeightMetadataKey;
 
+void Annotate(llvm::Instruction &Inst, Mode M);
 void Annotate(llvm::BasicBlock &BB, Mode M);
 void Annotate(llvm::BasicBlock &BB, const PayloadWeightTy &W);
 bool IsAnnotatedWithMode(const llvm::BasicBlock &BB);

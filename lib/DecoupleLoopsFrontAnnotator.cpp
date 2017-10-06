@@ -5,6 +5,9 @@
 #include "DecoupleLoopsFrontAnnotator.hpp"
 #include "DecoupleLoopsFrontWeights.hpp"
 
+#include "llvm/IR/Instruction.h"
+// using llvm::Instruction
+
 #include "llvm/IR/BasicBlock.h"
 // using llvm::BasicBlock
 
@@ -35,6 +38,14 @@ constexpr const char *const strPayloadMode = "pd";
 
 const llvm::StringRef ModeMetadataKey = "icsa.itr.mode";
 const llvm::StringRef PayloadWeightMetadataKey = "icsa.itr.payload.weight";
+
+void Annotate(llvm::Instruction &Inst, Mode M) {
+  auto &ctx = Inst.getParent()->getContext();
+  llvm::StringRef strMode =
+      Mode::Iterator == M ? strIteratorMode : strPayloadMode;
+  auto *node = llvm::MDNode::get(ctx, llvm::MDString::get(ctx, strMode));
+  Inst.setMetadata(ModeMetadataKey, node);
+}
 
 void Annotate(llvm::BasicBlock &BB, Mode M) {
   auto &ctx = BB.getContext();
