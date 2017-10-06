@@ -234,6 +234,17 @@ void Report(llvm::StringRef FilenamePrefix) {
   return;
 }
 
+const llvm::Loop *getOutermostLoop(const llvm::LoopInfo *LI,
+                                   const llvm::BasicBlock *BB) {
+  const auto *curLoop = LI->getLoopFor(BB);
+
+  if (curLoop)
+    while (const auto *parentLoop = curLoop->getParentLoop())
+      curLoop = parentLoop;
+
+  return curLoop;
+}
+
 } // namespace anonymous end
 
 //
@@ -286,16 +297,17 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       found ? ModifiedLoops.insert(lastSeenID)
             : UnmodifiedLoops.insert(lastSeenID);
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
-
-      for (const auto &k : blockModes)
-        if (k.second == IteratorRecognition::Mode::Payload) {
-          PayloadPHIChecker pdChecker(*e, DLP);
-          pdChecker.visit(k.first);
-
-          if (pdChecker.getStatus())
-            PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
-        }
     }
+
+    for (auto &k : blockModes)
+      if (k.second == IteratorRecognition::Mode::Payload) {
+        auto *outermostLoop = getOutermostLoop(&LI, k.first);
+        PayloadPHIChecker pdChecker(*outermostLoop, DLP);
+        pdChecker.visit(k.first);
+
+        if (pdChecker.getStatus())
+          PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
+      }
 
     // transform part
     if (modeChanges.size() || blockModes.size()) {
