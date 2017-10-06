@@ -113,5 +113,10 @@ PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB) {
   return mdW->getValue()->getUniqueInteger().getLimitedValue();
 }
 
+void PayloadPHIAnnotator::visitPHINode(llvm::PHINode &Inst) {
+  if (IteratorRecognition::Mode::Payload != GetMode(Inst, m_CurLoop, m_DLP))
+    Annotate(Inst, IteratorRecognition::Mode::Iterator);
+}
+
 } // namespace IteratorRecognition
 } // namespace icsa
