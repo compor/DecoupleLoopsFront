@@ -2,10 +2,11 @@
 //
 //
 
-#ifndef CONFIG_HPP
-#define CONFIG_HPP
-
 // clang-format off
+
+#ifndef @PRJ_NAME_UPPER@_CONFIG_HPP
+#define @PRJ_NAME_UPPER@_CONFIG_HPP
+
 #define @PRJ_NAME_UPPER@_DEBUG @PRJ_DEBUG_VALUE@
 
 #define @PRJ_NAME_UPPER@_VERSION @PRJ_VERSION@
@@ -13,6 +14,7 @@
 #define @PRJ_NAME_UPPER@_USES_DECOUPLELOOPS ${@PRJ_NAME_UPPER@_USES_DECOUPLELOOPS}
 
 #define @PRJ_NAME_UPPER@_USES_ANNOTATELOOPS ${@PRJ_NAME_UPPER@_USES_ANNOTATELOOPS}
+
 // clang-format on
 
-#endif // CONFIG_HPP
+#endif // header
