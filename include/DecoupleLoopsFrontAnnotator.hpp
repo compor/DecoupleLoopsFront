@@ -6,6 +6,7 @@
 #define DECOUPLELOOPSFRONTANNOTATOR_HPP
 
 #include "Config.hpp"
+#include "DecoupleLoopsFrontTypes.hpp"
 #include "DecoupleLoopsFront.hpp"
 #include "DecoupleLoopsFrontWeights.hpp"
 

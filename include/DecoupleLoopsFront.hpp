@@ -7,6 +7,8 @@
 
 #include "Config.hpp"
 
+#include "DecoupleLoopsFrontTypes.hpp"
+
 #if DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
 #include "DecoupleLoops.h"
 #endif // DECOUPLELOOPSFRONT_USES_DECOUPLELOOPS
@@ -37,8 +39,6 @@ class DominatorTree;
 namespace icsa {
 
 namespace IteratorRecognition {
-
-enum class Mode : unsigned { Iterator, Payload };
 
 template <typename T> using ModeMapTy = std::map<T, Mode>;
 template <typename T> using ModeChangePointTy = std::pair<T, Mode>;

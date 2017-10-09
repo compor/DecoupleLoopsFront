@@ -2,6 +2,8 @@
 //
 //
 
+#include "DecoupleLoopsFrontTypes.hpp"
+
 #include "DecoupleLoopsFront.hpp"
 
 #include "llvm/IR/BasicBlock.h"
