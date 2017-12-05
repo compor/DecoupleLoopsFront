@@ -42,6 +42,9 @@
 #include "llvm/Transforms/Scalar.h"
 // using char llvm::LoopInfoSimplifyID
 
+#include "llvm/Transforms/Utils/Local.h"
+// using llvm::DemotePHIToStack
+
 #include "llvm/ADT/SmallVector.h"
 // using llvm::SmallVector
 
@@ -253,6 +256,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   IteratorRecognition::BlockModeChangePointMapTy modeChanges;
   IteratorRecognition::BlockModeMapTy blockModes;
   std::set<llvm::BasicBlock *> phiMismatchBlocks;
+  std::set<llvm::PHINode *> payloadPhis;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
@@ -292,7 +296,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     std::reverse(workList.begin(), workList.end());
 
     for (auto *e : workList) {
-      bool found = FindPartitionPoints(*e, DLP, blockModes, modeChanges);
+      bool found =
+          FindPartitionPoints(*e, DLP, blockModes, modeChanges, payloadPhis);
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       lastSeenID = al.getAnnotatedId(*e);
@@ -304,6 +309,9 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     // transform part
     if (modeChanges.size() || blockModes.size()) {
       DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
+
+      for(const auto &k : payloadPhis)
+        llvm::DemotePHIToStack(k);
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 

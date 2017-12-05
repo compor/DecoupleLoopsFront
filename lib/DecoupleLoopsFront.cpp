@@ -68,9 +68,21 @@ bool IsSingleMode(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP) {
 bool FindPartitionPoints(
     const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
     IteratorRecognition::BlockModeMapTy &Modes,
-    IteratorRecognition::BlockModeChangePointMapTy &Points) {
+    IteratorRecognition::BlockModeChangePointMapTy &Points,
+    std::set<llvm::PHINode *> &PayloadPhis
+  ) {
   if (!DLP.hasWork(&CurLoop))
     return false;
+
+  for (auto ii = CurLoop.getHeader()->begin(), ie = CurLoop.getHeader()->end();
+       ii != ie; ++ii) {
+    auto *phi = llvm::dyn_cast<llvm::PHINode>(&*ii);
+    if (!phi)
+      break;
+
+    if(IteratorRecognition::Mode::Payload == GetMode(*phi, CurLoop, DLP))
+      PayloadPhis.insert(phi);
+  }
 
   for (auto bi = CurLoop.block_begin(), be = CurLoop.block_end(); bi != be;
        ++bi) {
