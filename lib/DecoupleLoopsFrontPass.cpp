@@ -116,9 +116,10 @@ static llvm::RegisterStandardPasses
 
 //
 
-static llvm::cl::opt<bool> AnnotateBlocksWithType(
-    "dlf-bb-annotate-type",
-    llvm::cl::desc("annotate each basic block with type using metadata"));
+static llvm::cl::opt<bool> AnnotateWithType(
+    "dlf-annotate-type",
+    llvm::cl::desc(
+        "annotate blocks and instructions with type using metadata"));
 
 static llvm::cl::opt<bool> AnnotatePayloadBlocksWithWeight(
     "dlf-bb-annotate-weight",
@@ -338,7 +339,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
                            e.first->getName());
         }
 
-      if (AnnotateBlocksWithType)
+      if (AnnotateWithType)
         for (auto &e : blockModes) {
           IteratorRecognition::Annotate(*e.first, e.second);
 
@@ -355,7 +356,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       hasModuleChanged = hasFunctionChanged = true;
     }
 
-    if (AnnotateBlocksWithType && AnnotatePayloadBlocksWithWeight)
+    if (AnnotateWithType && AnnotatePayloadBlocksWithWeight)
       for (auto &e : workList) {
         auto weights = IteratorRecognition::CalculatePayloadWeight(*e);
 
