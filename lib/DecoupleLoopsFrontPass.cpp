@@ -318,19 +318,17 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
       // this is a precautionary check
       // we should never find an iterator PHI in a payload block
       // TODO use an assertion
+      // moreover this detects all mismatches (not only for payload blocks)
       for (auto &k : blockModes) {
-        if (k.second == IteratorRecognition::Mode::Payload) {
-          auto *outermostLoop = getOutermostLoop(&LI, k.first);
-          MismatchedPHIFinder mpFinder(*outermostLoop, DLP);
-          mpFinder.visit(k.first);
+        auto *outermostLoop = getOutermostLoop(&LI, k.first);
+        MismatchedPHIFinder mpFinder(*outermostLoop, DLP);
+        mpFinder.visit(k.first);
 
-          if (mpFinder.getStatus())
-            mismatchedPHIBlocks.insert(k.first);
+        if (mpFinder.getStatus())
+          mismatchedPHIBlocks.insert(k.first);
 
-          if (shouldReport && mpFinder.getStatus())
-            MismatchedPHIFunctionss.insert(
-                k.first->getParent()->getName().str());
-        }
+        if (shouldReport && mpFinder.getStatus())
+          MismatchedPHIFunctionss.insert(k.first->getParent()->getName().str());
       }
 
       if (PrefixBlocksWithType)
