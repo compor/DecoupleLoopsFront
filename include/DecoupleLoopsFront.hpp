@@ -75,11 +75,10 @@ bool IsSingleMode(const llvm::BasicBlock &BB, const llvm::Loop &CurLoop,
 
 bool IsSingleMode(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP);
 
-bool FindPartitionPoints(const llvm::Loop &CurLoop,
-                         const DecoupleLoopsPass &DLP,
-                         IteratorRecognition::BlockModeMapTy &Modes,
-                         IteratorRecognition::BlockModeChangePointMapTy &Points,
-                         std::set<llvm::PHINode *> &PayloadPhis);
+bool FindPartitionPoints(
+    const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
+    IteratorRecognition::BlockModeMapTy &Modes,
+    IteratorRecognition::BlockModeChangePointMapTy &Points);
 
 void SplitAtPartitionPoints(
     IteratorRecognition::BlockModeChangePointMapTy &Points,

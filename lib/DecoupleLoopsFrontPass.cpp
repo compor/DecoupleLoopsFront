@@ -257,7 +257,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   IteratorRecognition::BlockModeChangePointMapTy modeChanges;
   IteratorRecognition::BlockModeMapTy blockModes;
   std::set<llvm::BasicBlock *> mismatchedPHIBlocks;
-  std::set<llvm::PHINode *> payloadPhis;
+  // std::set<llvm::PHINode *> payloadPhis;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
   bool shouldReport = !ReportFilenamePrefix.empty();
@@ -297,8 +297,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     std::reverse(workList.begin(), workList.end());
 
     for (auto *e : workList) {
-      bool found =
-          FindPartitionPoints(*e, DLP, blockModes, modeChanges, payloadPhis);
+      bool found = FindPartitionPoints(*e, DLP, blockModes, modeChanges);
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
       lastSeenID = al.getAnnotatedId(*e);
