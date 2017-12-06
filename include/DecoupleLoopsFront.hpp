@@ -75,31 +75,34 @@ bool IsSingleMode(const llvm::BasicBlock &BB, const llvm::Loop &CurLoop,
 
 bool IsSingleMode(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP);
 
-bool FindPartitionPoints(
-    const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP,
-    IteratorRecognition::BlockModeMapTy &Modes,
-    IteratorRecognition::BlockModeChangePointMapTy &Points,
-    std::set<llvm::PHINode *> &PayloadPhis);
+bool FindPartitionPoints(const llvm::Loop &CurLoop,
+                         const DecoupleLoopsPass &DLP,
+                         IteratorRecognition::BlockModeMapTy &Modes,
+                         IteratorRecognition::BlockModeChangePointMapTy &Points,
+                         std::set<llvm::PHINode *> &PayloadPhis);
 
 void SplitAtPartitionPoints(
     IteratorRecognition::BlockModeChangePointMapTy &Points,
     IteratorRecognition::BlockModeMapTy &Modes,
     llvm::DominatorTree *DT = nullptr, llvm::LoopInfo *LI = nullptr);
 
-class PayloadPHIChecker : public llvm::InstVisitor<PayloadPHIChecker> {
+class MismatchedPHIFinder : public llvm::InstVisitor<MismatchedPHIFinder> {
   const llvm::Loop &m_CurLoop;
   const DecoupleLoopsPass &m_DLP;
   bool m_Status;
 
 public:
-  PayloadPHIChecker(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
+  MismatchedPHIFinder(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
       : m_Status(false), m_CurLoop(CurLoop), m_DLP(DLP) {}
 
   // TODO maybe use safe bool idiom instead
   bool getStatus() { return m_Status; }
 
   void visitPHINode(llvm::PHINode &Inst) {
-    if (IteratorRecognition::Mode::Payload != GetMode(Inst, m_CurLoop, m_DLP))
+    // this assumes that the rest of the block (non-phi instructions) have the
+    // same mode, which means this should be applied after partitioning
+    auto *inst = Inst.getParent()->getFirstNonPHI();
+    if (GetMode(*inst, m_CurLoop, m_DLP) != GetMode(Inst, m_CurLoop, m_DLP))
       m_Status = true;
   }
 };

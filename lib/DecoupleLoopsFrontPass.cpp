@@ -178,7 +178,7 @@ std::set<unsigned int> UnmodifiedLoops;
 using FunctionName_t = std::string;
 
 std::set<FunctionName_t> ModifiedFunctions;
-std::set<FunctionName_t> PhiMismatchFunctions;
+std::set<FunctionName_t> MismatchedPHIFunctionss;
 
 void Report(llvm::StringRef FilenamePrefix) {
   std::error_code err;
@@ -223,11 +223,11 @@ void Report(llvm::StringRef FilenamePrefix) {
   report3.close();
 #endif // DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
 
-  filename = FilenamePrefix.str() + "-PhiMismatchFunctions.txt";
+  filename = FilenamePrefix.str() + "-MismatchedPHIFunctionss.txt";
   llvm::raw_fd_ostream report4(filename, err, llvm::sys::fs::F_Text);
 
   if (!err)
-    for (const auto &e : PhiMismatchFunctions)
+    for (const auto &e : MismatchedPHIFunctionss)
       report4 << e << "\n";
   else
     llvm::errs() << "could not open file: \"" << filename
@@ -256,7 +256,7 @@ const llvm::Loop *getOutermostLoop(const llvm::LoopInfo *LI,
 bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
   IteratorRecognition::BlockModeChangePointMapTy modeChanges;
   IteratorRecognition::BlockModeMapTy blockModes;
-  std::set<llvm::BasicBlock *> phiMismatchBlocks;
+  std::set<llvm::BasicBlock *> mismatchedPHIBlocks;
   std::set<llvm::PHINode *> payloadPhis;
   bool hasModuleChanged = false;
   bool hasFunctionChanged = false;
@@ -268,7 +268,7 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     workList.clear();
     modeChanges.clear();
     blockModes.clear();
-    phiMismatchBlocks.clear();
+    mismatchedPHIBlocks.clear();
 
     if (CurFunc.isDeclaration())
       continue;
@@ -316,23 +316,28 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 
-      for (auto &k : blockModes)
+      // this is a precautionary check
+      // we should never find an iterator PHI in a payload block
+      // TODO use an assertion
+      for (auto &k : blockModes) {
         if (k.second == IteratorRecognition::Mode::Payload) {
           auto *outermostLoop = getOutermostLoop(&LI, k.first);
-          PayloadPHIChecker pdChecker(*outermostLoop, DLP);
-          pdChecker.visit(k.first);
+          MismatchedPHIFinder mpFinder(*outermostLoop, DLP);
+          mpFinder.visit(k.first);
 
-          if (pdChecker.getStatus())
-            phiMismatchBlocks.insert(k.first);
+          if (mpFinder.getStatus())
+            mismatchedPHIBlocks.insert(k.first);
 
-          if (shouldReport && pdChecker.getStatus())
-            PhiMismatchFunctions.insert(k.first->getParent()->getName().str());
+          if (shouldReport && mpFinder.getStatus())
+            MismatchedPHIFunctionss.insert(
+                k.first->getParent()->getName().str());
         }
+      }
 
       if (PrefixBlocksWithType)
         for (auto &e : blockModes) {
           llvm::StringRef prefixPart{""};
-          if (phiMismatchBlocks.count(e.first))
+          if (mismatchedPHIBlocks.count(e.first))
             prefixPart = "mix_";
 
           e.first->setName(GetModePrefix(e.second) + prefixPart +
