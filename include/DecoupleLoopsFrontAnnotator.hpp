@@ -37,12 +37,12 @@ Mode GetAnnotatedMode(const llvm::Instruction &Inst);
 Mode GetAnnotatedMode(const llvm::BasicBlock &BB);
 PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB);
 
-class PayloadPHIAnnotator : public llvm::InstVisitor<PayloadPHIAnnotator> {
+class PHIAnnotator : public llvm::InstVisitor<PHIAnnotator> {
   const llvm::Loop &m_CurLoop;
   const DecoupleLoopsPass &m_DLP;
 
 public:
-  PayloadPHIAnnotator(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
+  PHIAnnotator(const llvm::Loop &CurLoop, const DecoupleLoopsPass &DLP)
       : m_CurLoop(CurLoop), m_DLP(DLP) {}
 
   void visitPHINode(llvm::PHINode &Inst);

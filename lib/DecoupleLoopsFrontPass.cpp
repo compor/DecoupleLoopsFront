@@ -311,8 +311,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     if (modeChanges.size() || blockModes.size()) {
       DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
 
-      for(const auto &k : payloadPhis)
-        llvm::DemotePHIToStack(k);
+      // for(const auto &k : payloadPhis)
+      // llvm::DemotePHIToStack(k);
 
       SplitAtPartitionPoints(modeChanges, blockModes, &DT, &LI);
 
@@ -343,11 +343,9 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
         for (auto &e : blockModes) {
           IteratorRecognition::Annotate(*e.first, e.second);
 
-          if (e.second == IteratorRecognition::Mode::Payload) {
-            auto *outermostLoop = getOutermostLoop(&LI, e.first);
-            IteratorRecognition::PayloadPHIAnnotator pa(*outermostLoop, DLP);
-            pa.visit(e.first);
-          }
+          auto *outermostLoop = getOutermostLoop(&LI, e.first);
+          IteratorRecognition::PHIAnnotator pa(*outermostLoop, DLP);
+          pa.visit(e.first);
         }
 
       if (shouldReport)

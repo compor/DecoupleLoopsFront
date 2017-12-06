@@ -133,7 +133,7 @@ PayloadWeightTy GetAnnotatedPayloadWeight(const llvm::BasicBlock &BB) {
   return mdW->getValue()->getUniqueInteger().getLimitedValue();
 }
 
-void PayloadPHIAnnotator::visitPHINode(llvm::PHINode &Inst) {
+void PHIAnnotator::visitPHINode(llvm::PHINode &Inst) {
   Annotate(Inst, GetMode(Inst, m_CurLoop, m_DLP));
 }
 
