@@ -160,14 +160,16 @@ void WriteGraphFile(const llvm::Function &Func,
       (DotDirectory + "/cfg." + Func.getName() + DotFilenameSuffix + ".dot")
           .str();
 
-  DEBUG_CMD(llvm::errs() << "writing file: " << dotFilename << "\n");
+  DEBUG_CMD(LogLevel::info, llvm::errs() << "writing file: " << dotFilename
+                                         << "\n");
   std::error_code ec;
   llvm::raw_fd_ostream dotFile(dotFilename, ec, llvm::sys::fs::F_Text);
 
   if (!ec)
     llvm::WriteGraph(dotFile, &Func, llvm::sys::fs::F_Text);
   else
-    DEBUG_CMD(llvm::errs() << "error writing file: " << dotFilename << "\n");
+    DEBUG_CMD(LogLevel::error,
+              llvm::errs() << "error writing file: " << dotFilename << "\n");
 }
 
 #if DECOUPLELOOPSFRONT_USES_ANNOTATELOOPS
@@ -273,7 +275,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
     if (CurFunc.isDeclaration())
       continue;
 
-    DEBUG_CMD(llvm::errs() << "process func: " << CurFunc.getName() << "\n");
+    DEBUG_CMD(LogLevel::debug,
+              llvm::errs() << "process func: " << CurFunc.getName() << "\n");
 
     auto &DT =
         getAnalysis<llvm::DominatorTreeWrapperPass>(CurFunc).getDomTree();
@@ -308,7 +311,8 @@ bool DecoupleLoopsFrontPass::runOnModule(llvm::Module &CurMod) {
 
     // transform part
     if (modeChanges.size() || blockModes.size()) {
-      DEBUG_CMD(llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
+      DEBUG_CMD(LogLevel::debug,
+                llvm::errs() << "transform func: " + CurFunc.getName() + "\n");
 
       // for(const auto &k : payloadPhis)
       // llvm::DemotePHIToStack(k);
