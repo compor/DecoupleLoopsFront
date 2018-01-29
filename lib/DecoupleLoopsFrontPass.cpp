@@ -149,6 +149,18 @@ bool passDebugFlag = false;
 static llvm::cl::opt<bool, true>
     Debug("dlf-debug", llvm::cl::desc("debug decouple loops front pass"),
           llvm::cl::location(passDebugFlag));
+
+LogLevel passLogLevel = LogLevel::info;
+static llvm::cl::opt<LogLevel, true> DebugLevel(
+    "dlf-debug-level",
+    llvm::cl::desc("debug level for decouple loops front pass"),
+    llvm::cl::location(passLogLevel),
+    llvm::cl::values(
+        clEnumValN(LogLevel::info, "info", "informational messages"),
+        clEnumValN(LogLevel::notice, "notice", "significant conditions"),
+        clEnumValN(LogLevel::warning, "warning", "warning conditions"),
+        clEnumValN(LogLevel::error, "error", "error conditions"),
+        clEnumValN(LogLevel::debug, "debug", "debug messages"), nullptr));
 #endif // DECOUPLELOOPSFRONT_DEBUG
 
 namespace {
